@@ -1,1 +1,199 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="myCanvas" width="1200" height="768"></canvas>
+    <script>
+    "use strict";
+
+
+var canvas = document.getElementById('myCanvas'),
+ctx = canvas.getContext("2d");
+var cameraHeight = 20, cameraX = 600, cameraY = 384;
+
+class box{
+    constructor(xCentre,xWidth,yCentre,yWidth,z){
+	this.xCentre = xCentre;
+	this.yCentre = yCentre;
+	this.xWidth = xWidth;
+	this.yWidth = yWidth;
+	this.z = z;
+
+	
+	this.verticeTLx = xCentre;
+	this.verticeTLy = yCentre;
+	
+	this.verticeTRx = xCentre + (xWidth);
+	this.verticeTRy = yCentre;
+	
+	this.verticeBLx = xCentre;
+	this.verticeBLy = yCentre + (yWidth);
+	
+	this.verticeBRx = xCentre + (xWidth);
+	this.verticeBRy = yCentre + (yWidth);
+
+    }
+
+    draw(ctx, cameraX, cameraY, cameraHeight)
+    {
+	//FLOOR
+	var scale = this.z / cameraHeight;
+/*	ctx.beginPath();
+	ctx.rect(this.xCentre,this.yCentre,this.xWidth,this.yWidth);
+	ctx.fillStyle = 'white';
+	ctx.fill();
+	ctx.stroke();
+*/	
+
+	//EDGES
+
+	var
+	tlx = this.verticeTLx+((this.verticeTLx-cameraX)*scale),
+	tly = this.verticeTLy+((this.verticeTLy-cameraY)*scale),
+	trx = this.verticeTRx+((this.verticeTRx-cameraX)*scale),
+	tRy = tly,
+	brx = trx,
+	bry = this.verticeBRy+((this.verticeBRy-cameraY)*scale),
+	blx = tlx,
+	bly = bry;
+
+	ctx.fillStyle = 'orange';
+
+	if(tly > cameraY)
+	{
+	    ctx.beginPath();
+	    ctx.moveTo(this.verticeTLx,this.verticeTLy);
+	    ctx.lineTo(tlx, tly);
+	    ctx.lineTo(trx, tRy);
+	    ctx.lineTo(this.verticeTRx,this.verticeTRy);
+	    ctx.closePath();
+	    ctx.fill();
+	    ctx.stroke();
+	}
+
+	if(trx < cameraX)
+	{
+	    ctx.beginPath();
+	    ctx.moveTo(this.verticeBRx,this.verticeBRy);
+	    ctx.lineTo(brx, bry);
+	    ctx.lineTo(trx, tRy);
+	    ctx.lineTo(this.verticeTRx,this.verticeTRy);
+	    ctx.closePath();
+	    ctx.fill();
+	    ctx.stroke();
+	}
+
+	if(tlx > cameraX)
+	{
+	    ctx.beginPath();
+	    ctx.moveTo(this.verticeBLx,this.verticeBLy);
+	    ctx.lineTo(blx, bly);
+	    ctx.lineTo(tlx, tly);
+	    ctx.lineTo(this.verticeTLx,this.verticeTLy);
+	    ctx.closePath();
+	    ctx.fill();
+	    ctx.stroke();
+	}
+
+	if(bry < cameraY)
+	{
+	    ctx.beginPath();
+	    ctx.moveTo(this.verticeBLx,this.verticeBLy);
+	    ctx.lineTo(blx, bly);
+	    ctx.lineTo(brx, bry);
+	    ctx.lineTo(this.verticeBRx,this.verticeBRy);
+	    ctx.closePath();
+	    ctx.fill();
+	    ctx.stroke();
+	}
+	
+	//ROOF
+	
+	ctx.beginPath();
+	ctx.rect(this.verticeTLx+((this.verticeTLx-cameraX)*scale),this.verticeTLy+((this.verticeTLy-cameraY)*scale),(this.verticeBRx+((this.verticeBRx-cameraX)*scale))-(this.verticeBLx+((this.verticeBLx-cameraX)*scale)),-1*((this.verticeTLy+((this.verticeTLy-cameraY)*scale))-(this.verticeBLy+((this.verticeBLy-cameraY)*scale))));
+	ctx.fillStyle = 'green';
+	ctx.fill();
+
+	
+
+    }
+
+}
+var x = 600, y = 384, velY = 0, velX = 0, speed = 50,friction = 0.9;
+var keys = [];
+var test = new box(500,50,200,90,5);
+function update() {
+
+    if (keys[87]) {
+        if (velY > -speed) {
+            velY--;
+        }
+    }
+    
+    if (keys[83]) {
+        if (velY < speed) {
+            velY++;
+        }
+    }
+    if (keys[68]) {
+        if (velX < speed) {
+            velX++;
+        }
+    }
+    if (keys[65]) {
+        if (velX > -speed) {
+            velX--;
+	    
+        }
+    }
+    velY *= friction;
+    y += velY;
+    velX *= friction;
+    x += velX;
+    
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, 1200, 768);
+
+    ctx.setTransform(1, 0, 0, 1, 600-x, 384-y);
+    var guy = new Image();
+    guy.onload =  function(){
+	ctx.drawImage(guy, x, y)
+    };
+    guy.src = '../quick-Sprite.png';
+ 
+
+    cameraX = x;
+    cameraY = y + 150;
+    setTimeout(update, 10);
+    test.draw(ctx, cameraX, cameraY, cameraHeight);
+}
+
+update();
+
+document.body.addEventListener("keydown", function (e) {
+    keys[e.keyCode] = true;
+});
+document.body.addEventListener("keyup", function (e) {
+    keys[e.keyCode] = false;
+});
+
+
+
+
+/*
+canvas.addEventListener('click', function(ev)
+		   {
+		       test.draw(ctx, event.clientX, event.clientY, cameraHeight);
+		   } );
+*/
+    </script>
+  </body>
+</html>      
 
