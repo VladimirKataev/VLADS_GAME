@@ -19,7 +19,7 @@ ctx = canvas.getContext("2d");
 var cameraHeight = 20, cameraX = 600, cameraY = 384;
 
 class wall{
-    constructor(xCentre,xWidth,yCentre,yWidth,z){
+    constructor(X1B,Y1B,X2B,Y2B,Height,colour){
     }
 
 }
