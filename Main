@@ -18,117 +18,14 @@ var canvas = document.getElementById('myCanvas'),
 ctx = canvas.getContext("2d");
 var cameraHeight = 20, cameraX = 600, cameraY = 384;
 
-class box{
+class wall{
     constructor(xCentre,xWidth,yCentre,yWidth,z){
-	this.xCentre = xCentre;
-	this.yCentre = yCentre;
-	this.xWidth = xWidth;
-	this.yWidth = yWidth;
-	this.z = z;
-
-	
-	this.verticeTLx = xCentre;
-	this.verticeTLy = yCentre;
-	
-	this.verticeTRx = xCentre + (xWidth);
-	this.verticeTRy = yCentre;
-	
-	this.verticeBLx = xCentre;
-	this.verticeBLy = yCentre + (yWidth);
-	
-	this.verticeBRx = xCentre + (xWidth);
-	this.verticeBRy = yCentre + (yWidth);
-
-    }
-
-    draw(ctx, cameraX, cameraY, cameraHeight)
-    {
-	//FLOOR
-	var scale = this.z / cameraHeight;
-/*	ctx.beginPath();
-	ctx.rect(this.xCentre,this.yCentre,this.xWidth,this.yWidth);
-	ctx.fillStyle = 'white';
-	ctx.fill();
-	ctx.stroke();
-*/	
-
-	//EDGES
-
-	var
-	tlx = this.verticeTLx+((this.verticeTLx-cameraX)*scale),
-	tly = this.verticeTLy+((this.verticeTLy-cameraY)*scale),
-	trx = this.verticeTRx+((this.verticeTRx-cameraX)*scale),
-	tRy = tly,
-	brx = trx,
-	bry = this.verticeBRy+((this.verticeBRy-cameraY)*scale),
-	blx = tlx,
-	bly = bry;
-
-	ctx.fillStyle = 'orange';
-
-	if(tly > cameraY)
-	{
-	    ctx.beginPath();
-	    ctx.moveTo(this.verticeTLx,this.verticeTLy);
-	    ctx.lineTo(tlx, tly);
-	    ctx.lineTo(trx, tRy);
-	    ctx.lineTo(this.verticeTRx,this.verticeTRy);
-	    ctx.closePath();
-	    ctx.fill();
-	    ctx.stroke();
-	}
-
-	if(trx < cameraX)
-	{
-	    ctx.beginPath();
-	    ctx.moveTo(this.verticeBRx,this.verticeBRy);
-	    ctx.lineTo(brx, bry);
-	    ctx.lineTo(trx, tRy);
-	    ctx.lineTo(this.verticeTRx,this.verticeTRy);
-	    ctx.closePath();
-	    ctx.fill();
-	    ctx.stroke();
-	}
-
-	if(tlx > cameraX)
-	{
-	    ctx.beginPath();
-	    ctx.moveTo(this.verticeBLx,this.verticeBLy);
-	    ctx.lineTo(blx, bly);
-	    ctx.lineTo(tlx, tly);
-	    ctx.lineTo(this.verticeTLx,this.verticeTLy);
-	    ctx.closePath();
-	    ctx.fill();
-	    ctx.stroke();
-	}
-
-	if(bry < cameraY)
-	{
-	    ctx.beginPath();
-	    ctx.moveTo(this.verticeBLx,this.verticeBLy);
-	    ctx.lineTo(blx, bly);
-	    ctx.lineTo(brx, bry);
-	    ctx.lineTo(this.verticeBRx,this.verticeBRy);
-	    ctx.closePath();
-	    ctx.fill();
-	    ctx.stroke();
-	}
-	
-	//ROOF
-	
-	ctx.beginPath();
-	ctx.rect(this.verticeTLx+((this.verticeTLx-cameraX)*scale),this.verticeTLy+((this.verticeTLy-cameraY)*scale),(this.verticeBRx+((this.verticeBRx-cameraX)*scale))-(this.verticeBLx+((this.verticeBLx-cameraX)*scale)),-1*((this.verticeTLy+((this.verticeTLy-cameraY)*scale))-(this.verticeBLy+((this.verticeBLy-cameraY)*scale))));
-	ctx.fillStyle = 'green';
-	ctx.fill();
-
-	
-
     }
 
 }
+
 var x = 600, y = 384, velY = 0, velX = 0, speed = 50,friction = 0.9;
 var keys = [];
-var test = new box(500,50,200,90,5);
 function update() {
 
     if (keys[87]) {
@@ -172,7 +69,6 @@ function update() {
     cameraX = x;
     cameraY = y + 150;
     setTimeout(update, 10);
-    test.draw(ctx, cameraX, cameraY, cameraHeight);
 }
 
 update();
