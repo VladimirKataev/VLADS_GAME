@@ -24,7 +24,10 @@ class wall{
     
     draw(RX,RY,RH){
     }
-
+    
+    collidecheck(XO,YO){
+    }
+{
 }
 
 var x = 600, y = 384, velY = 0, velX = 0, speed = 50,friction = 0.9;
