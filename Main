@@ -21,6 +21,9 @@ var cameraHeight = 20, cameraX = 600, cameraY = 384;
 class wall{
     constructor(X1B,Y1B,X2B,Y2B,Height,colour){
     }
+    
+    draw(RX,RY,RH){
+    }
 
 }
 
