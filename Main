@@ -40,6 +40,11 @@ class wall{ // To use: X1,Y1,X2,Y2 (ground coordinates), height of wall,camera h
     }
 }
 
+class roof{
+	constructor(){
+	}
+}
+
 var x = 600, y = 384, velY = 0, velX = 0, speed = 50,friction = 0.9;
 var keys = [];
 function update() {
