@@ -18,8 +18,19 @@ var canvas = document.getElementById('myCanvas'),
 ctx = canvas.getContext("2d");
 var cameraHeight = 20, cameraX = 600, cameraY = 384;
 
-class wall{
-    constructor(X1B,Y1B,X2B,Y2B,Height,colour){
+class wall{ // To use: X1,Y1,X2,Y2 (ground coordinates), height of wall,camera height,camera x, camera y
+
+    constructor(X1B,Y1B,X2B,Y2B,Height,CAMHEIGHT,CAMX,CAMY){
+    this.scale = (this.Height/CAMHEIGHT);
+    this.X1B = X1B;
+    this.Y1B = Y1B;
+    this.X2B = X2B;
+    this.Y2B = Y2B;
+
+    this.X1T = ((X1B - CAMX) * this.scale);
+    this.Y1T = ((Y1B - CAMY) * this.scale);
+    this.X2T = ((X2B - CAMX) * this.scale);
+    this.Y2T = ((Y2B - CAMY) * this.scale);
     }
     
     draw(RX,RY,RH){
@@ -27,7 +38,6 @@ class wall{
     
     collidecheck(XO,YO){
     }
-{
 }
 
 var x = 600, y = 384, velY = 0, velX = 0, speed = 50,friction = 0.9;
