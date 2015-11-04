@@ -33,7 +33,7 @@ class wall{ // To use: X1,Y1,X2,Y2 (ground coordinates), height of wall,camera h
     this.Y2T = ((Y2B - CAMY) * this.scale);
     }
     
-    draw(RX,RY,RH){
+    draw(){ // This draws walls (roofs will be left to the roof class)
     }
     
     collidecheck(XO,YO){
