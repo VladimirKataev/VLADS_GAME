@@ -32,7 +32,7 @@ class wall{ // To use: X1,Y1,X2,Y2 (ground coordinates), height of wall,camera h
     this.X2T = ((X2B - CAMX) * this.scale);
     this.Y2T = ((Y2B - CAMY) * this.scale);
     
-    this.gradient = ((X1B - X2B)/(Y1B-Y2B))
+    this.gradient = ((X1B - X2B)/(Y1B-Y2B));
 
     }
     
@@ -83,12 +83,10 @@ function update() {
     ctx.clearRect(0, 0, 1200, 768);
 
     ctx.setTransform(1, 0, 0, 1, 600-x, 384-y);
-    var guy = new Image();
-    guy.onload =  function(){
-	ctx.drawImage(guy, x, y)
-    };
-    guy.src = '../quick-Sprite.png';
- 
+    
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(x-5,y-5,10,10);
+
 
     cameraX = x;
     cameraY = y + 150;
