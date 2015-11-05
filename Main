@@ -103,16 +103,6 @@ document.body.addEventListener("keydown", function (e) {
 document.body.addEventListener("keyup", function (e) {
     keys[e.keyCode] = false;
 });
-
-
-
-
-/*
-canvas.addEventListener('click', function(ev)
-		   {
-		       test.draw(ctx, event.clientX, event.clientY, cameraHeight);
-		   } );
-*/
     </script>
   </body>
 </html>      
