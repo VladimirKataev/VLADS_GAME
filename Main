@@ -31,6 +31,9 @@ class wall{ // To use: X1,Y1,X2,Y2 (ground coordinates), height of wall,camera h
     this.Y1T = ((Y1B - CAMY) * this.scale);
     this.X2T = ((X2B - CAMX) * this.scale);
     this.Y2T = ((Y2B - CAMY) * this.scale);
+    
+    this.gradient = ((X1B - X2B)/(Y1B-Y2B))
+
     }
     
     draw(){ // This draws walls (roofs will be left to the roof class)
