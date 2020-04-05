@@ -2,19 +2,43 @@
 #include<utility>
 #include<string>
 class Board{
-	unsigned char area[64]; //0 for untaken, 1 for white, 3 for black
-	bool whiteTurn;
+//Use a char to designate a move
+
+//(char & 240) >> 4 to get row#
+//(char & 15) to get col#
+unsigned char board[256];
+/*a char is
+	0 for uninhabited, 	so we can if(board[pos]) for taken
+	1 for O,						so we can &2 to get isBlack(pos)
+	3 for X							so we can &2
+*/
+unsigned char moves = 0;			//we only need 64, moves%2 returns whiteMove
+
+
+//257 bytes of internal data, no pointers to oustide
+
+
 public:
-	Board();// sets the area to be all empty, bar starting grid, black starts
-	Board(const Board& copy);
-	~Board();
+	Board();
+	//Board(const Board& copy);// is not needed as no pointers to outside self
+	//~Board();// is not needed as everything fits in one
 
 
-	//note pair<int, int> is equivalent to a move/board position
-	char getSquare(std::pair<int, int> pos) const; // rows/cols start at 0
-	std::vector<std::pair<int, int>> getMoves() const;
-	bool getWhiteTurn() const;
+	char move(char pos); //the char return is how many are converted
+	char allowedMove(char pos) const; //see above
+	char getMoves() const;//How many moves are done
+	bool xMove() const;
+	bool oMove() const;
+	std::vector<char> getAllowedMoves() const;
+	char getSquare(char r, char c) const;
+	char getSquare(int r, int c) const;
+	char getSquare(char in) const;
+
+	char getXCount() const;
+	char getOCount() const;
+	char rcToChar(char r, char c) const;
+	char rcToChar(int r, int c) const;
+
 	std::string boardString() const;
-	int getWhiteCount() const;
-	int getBlackCount() const;
+
 };
