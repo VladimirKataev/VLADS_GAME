@@ -57,54 +57,62 @@ char Board::allowedMove(char pos) const{
 	if(board[pos]) return 0;
 	bool broke = false;
 
-
-	for(char a = r - 1; a >= 0 && !broke; a--){ //up test
-		//std::cout << "Testing " << a+48 << "," << c+48 << " which gives" << getSquare(a,c)+48<<std::endl;
-		if(!getSquare(a,c)){
+	reach = 0; broke = false;
+	for(char u = r + 1, v = c + 1; u >= 0 && u < 8 && v >= 0 && v < 8 && !getSquare(u,v); u++, v++){ // down-right
+		if(u == r + 1 && v == c + 1 && getSquare(u,v) = ours)
 			broke = true;
-			reach = 0;
-		}
 		else{
-			if(getSquare(a,c) == ours){conv += reach; reach = 0;}
-			else reach++;
+			if(getSquare(u,v) == ours){
+				reach++;
+			}
+			else{
+					conv += reach;
+					reach = 0;
+			}
 		}
-	}broke = false;
-
-	for(char a = r + 1; a < 8 && !broke; a++){ //down test
-		//std::cout << "Testing " << a+48 << "," << c+48 << " which gives" << getSquare(a,c)+48<<std::endl;
-		if(!getSquare(a,c)){
+	}
+	reach = 0; broke = false;
+	for(char u = r - 1, v = c + 1; u >= 0 && u < 8 && v >= 0 && v < 8 && !getSquare(u,v); u--, v++){ // up-right
+		if(u == r - 1 && v == c + 1 && getSquare(u,v) = ours)
 			broke = true;
-			reach = 0;
-		}
 		else{
-			if(getSquare(a,c) == ours){conv += reach; reach = 0;}
-			else reach++;
+			if(getSquare(u,v) == ours){
+				reach++;
+			}
+			else{
+					conv += reach;
+					reach = 0;
+			}
 		}
-	}broke = false;
-	for(char a = c - 1; c >= 0 && !broke; a--){ //left test
-		//std::cout << "Testing " << a+48 << "," << c+48 << " which gives" << getSquare(a,c)+48<<std::endl;
-		if(!getSquare(r,a)){
+	}
+	reach = 0; broke = false;
+	for(char u = r - 1, v = c - 1; u >= 0 && u < 8 && v >= 0 && v < 8 && !getSquare(u,v); u--, v--){ // down-left
+		if(u == r - 1 && v == c - 1 && getSquare(u,v) = ours)
 			broke = true;
-			reach = 0;
-		}
 		else{
-			if(getSquare(r,a) == ours){conv += reach; reach = 0;}
-			else reach++;
+			if(getSquare(u,v) == ours){
+				reach++;
+			}
+			else{
+					conv += reach;
+					reach = 0;
+			}
 		}
-	}broke = false;
-	for(char a = c + 1; a < 8 && !broke; a++){ //right test
-		//std::cout << "Testing " << a+48 << "," << c+48 << " which gives" << getSquare(a,c)+48<<std::endl;
-		if(!getSquare(r,a)){
+	}
+	reach = 0; broke = false;
+	for(char u = r + 1, v = c - 1; u >= 0 && u < 8 && v >= 0 && v < 8 && !getSquare(u,v); u++, v--){ // up-left
+		if(u == r + 1 && v == c - 1 && getSquare(u,v) = ours)
 			broke = true;
-			reach = 0;
-		}
 		else{
-			if(getSquare(r,a) == ours){conv += reach; reach = 0;}
-			else reach++;
+			if(getSquare(u,v) == ours){
+				reach++;
+			}
+			else{
+					conv += reach;
+					reach = 0;
+			}
 		}
-	}broke = false;
-
-
+	}
 
 
 
