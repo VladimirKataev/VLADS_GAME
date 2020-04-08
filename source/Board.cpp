@@ -45,79 +45,60 @@ char Board::getSquare(int r, int c) const{
 }
 
 char Board::allowedMove(char pos) const{
+	if(board[pos]) return 0;
+	if(getSquare(pos)) return 0;
 	char conv = 0;  //guaranteed conversions
 	char reach = 0;	//possible conversions
 	char combo = 0;	//"locked" conversions
 	char ours = oMove()?1:3;
-	//std::cout << "move is " << ours << std::endl;
-	char r = pos >> 4;
-	char c = pos & 0xF;
-	//std::cout << "R=" << r << " and C=" << c << std::endl;
-	//conv = ((r << 4) + c); remnants of debugging
-	if(board[pos]) return 0;
-	bool broke = false;
+	char row = pos >> 4;
+	char col = pos & 0xF;
+	return
+	testDir(pos, rcToChar(row+1,col))+
+	testDir(pos, rcToChar(row-1,col))+
+	testDir(pos, rcToChar(row+1,col+1))+
+	testDir(pos, rcToChar(row+1,col-1))+
+	testDir(pos, rcToChar(row-1,col+1))+
+	testDir(pos, rcToChar(row-1,col-1))+
+	testDir(pos, rcToChar(row,col-1))+
+	testDir(pos, rcToChar(row,col+1));
+}
 
-	reach = 0; broke = false;
-	for(char u = r + 1, v = c + 1; u >= 0 && u < 8 && v >= 0 && v < 8 && !getSquare(u,v); u++, v++){ // down-right
-		if(u == r + 1 && v == c + 1 && getSquare(u,v) = ours)
-			broke = true;
-		else{
-			if(getSquare(u,v) == ours){
-				reach++;
-			}
-			else{
-					conv += reach;
-					reach = 0;
-			}
+char Board::testDir(char pos, char tst) const{
+	//std::cout << "Coords " << (int) pos << " Dir " << (int) tst << '\n';
+	char pC = pos & 0xF;
+	char pR = pos >> 4;
+	char tR = tst >> 4;
+	char tC = tst & 0xF;
+	if(!board[tst]) return 0;
+	if(tst & 0x88) return 0; // nope if hit on 10001000 mask, good for checking OOB
+	if(pos == tst) return 0; //obvs
+	if((pC - tC != 1 && tC - pC != 1 && pC != tC) ||
+		(pR - tR != 1 && tR - pR != 1 && pR != tR)) return 0; //return 0 if the 2 tested aren't neighbours
+
+	bool 	up = (tR < pR),
+				down = (tR > pR),
+				left = (tC < pC),
+				right = (tC > pC);
+	//std::cout << "pR:" << (int)pR << " pC:" << (int)pC << " tC:" << (int)tC << " tR:" << (int)tR << '\n';
+
+	char ans = 0;
+	char combo = 0;
+	char move = oMove()?1:3;
+	//std::cout << "UDLR:" << up << down << left << right <<"\n";
+	while((tR < 8 && !(tR & 0x80)) && (tC < 8 && !(tC & 0x80)) && getSquare(tR, tC)){
+		if(getSquare(tR, tC) == move){
+			ans += combo; combo = 0;
 		}
+		else
+			combo++;
+		if(up) tR--;
+		if(down) tR++;
+		if(left) tC--;
+		if(right) tC++;
 	}
-	reach = 0; broke = false;
-	for(char u = r - 1, v = c + 1; u >= 0 && u < 8 && v >= 0 && v < 8 && !getSquare(u,v); u--, v++){ // up-right
-		if(u == r - 1 && v == c + 1 && getSquare(u,v) = ours)
-			broke = true;
-		else{
-			if(getSquare(u,v) == ours){
-				reach++;
-			}
-			else{
-					conv += reach;
-					reach = 0;
-			}
-		}
-	}
-	reach = 0; broke = false;
-	for(char u = r - 1, v = c - 1; u >= 0 && u < 8 && v >= 0 && v < 8 && !getSquare(u,v); u--, v--){ // down-left
-		if(u == r - 1 && v == c - 1 && getSquare(u,v) = ours)
-			broke = true;
-		else{
-			if(getSquare(u,v) == ours){
-				reach++;
-			}
-			else{
-					conv += reach;
-					reach = 0;
-			}
-		}
-	}
-	reach = 0; broke = false;
-	for(char u = r + 1, v = c - 1; u >= 0 && u < 8 && v >= 0 && v < 8 && !getSquare(u,v); u++, v--){ // up-left
-		if(u == r + 1 && v == c - 1 && getSquare(u,v) = ours)
-			broke = true;
-		else{
-			if(getSquare(u,v) == ours){
-				reach++;
-			}
-			else{
-					conv += reach;
-					reach = 0;
-			}
-		}
-	}
-
-
-
-
-	return conv;
+	//std::cout << "testDir done for "<< ans <<"\n";
+	return ans;
 }
 
 char Board::rcToChar(char r, char c) const{
@@ -129,16 +110,17 @@ char Board::rcToChar(int r, int c) const{
 
 std::string Board::boardString() const{
 	std::string toRet;
-	toRet += "x|01234567\n-----------\n";
+	toRet += "x|0|1|2|3|4|5|6|7|->C\n--------------------\n";
 	for(char a = 0; a < 8; a++){
 		toRet += (char)(48+a);
 		toRet += "|";
 		for(char b = 0; b < 8; b++){
-			if(getSquare(a, b)) toRet += (getSquare(a,b)&2)?"X":"O";
-			else toRet += " ";
+			if(getSquare(a, b)) toRet += (getSquare(a,b)&2)?"X|":"O|";
+			else toRet += allowedMove(rcToChar(a,b))?"?|":" |";
 		}
-		toRet += "\n";
+		toRet += "\n--------------------\n";
 	}
+	toRet += "|\nV\nR\n";
 	toRet += "Turn of ";
 	toRet += xMove()?"X":"O";
 	return toRet;
