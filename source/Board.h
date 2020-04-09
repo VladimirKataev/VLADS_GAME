@@ -26,6 +26,8 @@ public:
 
 	char move(char pos); //the char return is how many are converted
 	char testDir(char mov, char tst) const;
+	char changeDir(char pos, char tst);
+
 	char allowedMove(char pos) const; //see above
 	char getMoves() const;//How many moves are done
 	bool xMove() const;
