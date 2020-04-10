@@ -13,7 +13,7 @@ unsigned char board[256];
 	3 for X							so we can &2
 */
 unsigned char moves = 0;			//we only need 64, moves%2 returns whiteMove
-
+bool xTurn;
 
 //257 bytes of internal data, no pointers to oustide
 
@@ -32,7 +32,7 @@ public:
 	char getMoves() const;//How many moves are done
 	bool xMove() const;
 	bool oMove() const;
-	std::vector<char> getAllowedMoves() const;
+	std::vector<char> getAllowedMoves(); //can change the turn, hence non-const
 	char getSquare(char r, char c) const;
 	char getSquare(int r, int c) const;
 	char getSquare(char in) const;
@@ -43,5 +43,5 @@ public:
 	char rcToChar(int r, int c) const;
 
 	std::string boardString() const;
-
+	void changeSide();
 };

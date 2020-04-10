@@ -1,5 +1,8 @@
 #include"Board.h"
 #include<iostream>
+
+char Board::getMoves() const {return moves;}
+
 Board::Board(){
 	for(char a = 0; a < 8; a++){
 		for(char b = 0; b < 8; b++){
@@ -13,12 +16,13 @@ Board::Board(){
 	board[0x43] = 1;
 	board[0x34] = 1;
 	moves = 4;
+	xTurn = true;
 }
 bool Board::xMove() const{
-	return !oMove();
+	return xTurn;
 }
 bool Board::oMove() const{
-	return moves % 2;
+	return !xTurn;
 }
 char Board::getOCount() const{
 	char ans = 0;
@@ -50,7 +54,7 @@ char Board::allowedMove(char pos) const{
 	char conv = 0;  //guaranteed conversions
 	char reach = 0;	//possible conversions
 	char combo = 0;	//"locked" conversions
-	char ours = oMove()?1:3;
+	char ours = xTurn?3:1;
 	char row = pos >> 4;
 	char col = pos & 0xF;
 	return
@@ -84,11 +88,14 @@ char Board::testDir(char pos, char tst) const{
 
 	char ans = 0;
 	char combo = 0;
-	char move = oMove()?1:3;
+	char move = xTurn?3:1;
+	if(getSquare(tst) == move) return 0;
+
 	//std::cout << "UDLR:" << up << down << left << right <<"\n";
 	while((tR < 8 && !(tR & 0x80)) && (tC < 8 && !(tC & 0x80)) && getSquare(tR, tC)){
 		if(getSquare(tR, tC) == move){
 			ans += combo; combo = 0;
+			return ans;
 		}
 		else
 			combo++;
@@ -110,7 +117,7 @@ char Board::rcToChar(int r, int c) const{
 
 std::string Board::boardString() const{
 	std::string toRet;
-	toRet += "x|0|1|2|3|4|5|6|7|->C\n--------------------\n";
+	toRet += "x|0|1|2|3|4|5|6|7|->C\n------------------\n";
 	for(char a = 0; a < 8; a++){
 		toRet += (char)(48+a);
 		toRet += "|";
@@ -118,16 +125,16 @@ std::string Board::boardString() const{
 			if(getSquare(a, b)) toRet += (getSquare(a,b)&2)?"X|":"O|";
 			else toRet += allowedMove(rcToChar(a,b))?"?|":" |";
 		}
-		toRet += "\n--------------------\n";
+		toRet += "\n------------------\n";
 	}
-	toRet += "|\nV\nR\n";
+	toRet += "|\nV\nR-----------------\n";
 	toRet += "Turn of ";
-	toRet += xMove()?"X":"O";
+	toRet += xTurn?"X":"O";
 	return toRet;
 }
 
 
-std::vector<char> Board::getAllowedMoves() const{
+std::vector<char> Board::getAllowedMoves(){
 	std::vector<char> v;
 	for(char a = 0; a < 8; a++){
 		for(char b = 0; b < 8; b++){
@@ -158,7 +165,9 @@ char Board::changeDir(char pos, char tst){
 
 	char ans = 0;
 	char combo = 0;
-	char move = oMove()?1:3;
+	char move = xTurn?3:1;;
+	if(getSquare(tst) == move) return 0;
+
 	//std::cout << "UDLR:" << up << down << left << right <<"\n";
 	while((tR < 8 && !(tR & 0x80)) && (tC < 8 && !(tC & 0x80)) && getSquare(tR, tC)){
 		if(getSquare(tR, tC) == move){
@@ -172,6 +181,7 @@ char Board::changeDir(char pos, char tst){
 				chg = rcToChar(cR, cC);
 				board[chg] = move;
 			}
+			return combo;
 		}
 		else
 			combo++;
@@ -196,8 +206,13 @@ char Board::move(char pos){
 	changeDir(pos, rcToChar(r - 1, c-1))+
 	changeDir(pos, rcToChar(r, c - 1))+
 	changeDir(pos, rcToChar(r, c+1));
-	board[pos] = xMove()?3:1;
+	board[pos] = xTurn?3:1;;
 	moves++;
+	xTurn = !xTurn;
 	return ans;
 
+}
+
+void Board::changeSide(){
+	xTurn = !xTurn;
 }

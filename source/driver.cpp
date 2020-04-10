@@ -1,14 +1,15 @@
 #include<iostream>
 #include<algorithm>
-#include"Board.h"
+//#include"Board.h"
+#include"Game.h"
 using namespace std;
 
 
-void charToString(char in){
-	cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
-}
+
 
 int main(){
+
+	/*
 	Board tst;
 	vector<char> moves;
 
@@ -18,9 +19,15 @@ int main(){
 	moves = tst.getAllowedMoves();
 	cout << "Available moves are:";
 	for_each(begin(moves), end(moves), charToString);
-	cout << endl;
+	cout << "Move at 2,4"<<endl;
+	tst.move(tst.rcToChar(2,4));
+	cout << tst.boardString() << endl;
+	*/
 
-
+	Game run;
+	while(run.move()){
+		cout << endl;
+	}
 
 	return 0;
 }
