@@ -32,7 +32,11 @@ char Board::getOCount() const{
 	return ans;
 }
 char Board::getXCount() const{
-	return moves - getOCount();
+	char ans = 0;
+	for(char iter = 0;  iter < 127; iter++)
+		if(board[iter] == 3)
+			ans++;
+	return ans;
 }
 char Board::getSquare(char in) const{
 	return board[in];
@@ -194,7 +198,7 @@ char Board::changeDir(char pos, char tst){
 	return ans;
 }
 char Board::move(char pos){
-	if(!allowedMove(pos)) return 0; //will be optimised out when game class is made
+	//if(!allowedMove(pos)) return 0; //will be optimised out when game class is made
 	char r = pos >> 4;
 	char c = pos & 0xF;
 	char ans =
@@ -215,4 +219,7 @@ char Board::move(char pos){
 
 void Board::changeSide(){
 	xTurn = !xTurn;
+}
+bool Board::getXTurn() const{
+	return xTurn;
 }

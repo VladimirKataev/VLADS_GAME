@@ -1,0 +1,3 @@
+Nice facts to remember:
+  move() returns the number of enemy spots converted
+  so a tree can be calculated as ourMove - theirMove + ourMove

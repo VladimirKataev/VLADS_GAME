@@ -36,7 +36,7 @@ public:
 	char getSquare(char r, char c) const;
 	char getSquare(int r, int c) const;
 	char getSquare(char in) const;
-
+	bool getXTurn() const;
 	char getXCount() const;
 	char getOCount() const;
 	char rcToChar(char r, char c) const;
