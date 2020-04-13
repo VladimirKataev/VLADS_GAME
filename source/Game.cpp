@@ -60,13 +60,13 @@ Game::Game(){
 }
 bool Game::move(){
   std::cout << field.boardString() << '\n';
+	//std::cout << "pos 33 = " << field.getSquare((char)(3),(char)(3)) << std::endl;
   options = field.getAllowedMoves();
   char move;
   int row;
   int col;
   if((options.size() == 0 && skippedTurn) || field.getMoves() == 64){
     std::cout << "Game Over\nX:" << (int)(field.getXCount()) << " O:"<< (int)(field.getOCount());
-    std::cout << "exit 1\n";
     return false;
   }
   else if(options.size() == 0){

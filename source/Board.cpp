@@ -3,20 +3,50 @@
 
 char Board::getMoves() const {return moves;}
 
-Board::Board(){
-	for(char a = 0; a < 8; a++){
-		for(char b = 0; b < 8; b++){
-			board[rcToChar(a,b)] = 0;
-		}
-
+void printMask(unsigned long long int in){
+	unsigned long long int meta = (1ull << 63);
+	std::cout << "meta = " << meta << '\n';
+	std::cout << "Mask of " << in << ":";
+	while(meta){
+		if(in & meta) std::cout << "1";
+		else std::cout << "0";
+		meta = meta >> 1ull;
 	}
+	std::cout << "\n";
+}
 
-	board[0x33] = 3;
-	board[0x44] = 3;
-	board[0x43] = 1;
-	board[0x34] = 1;
+void Board::setSquare(char pos, bool isX){
+	unsigned long long int p = charToMask(pos);
+	boardPlaced += p;
+	if(isX)
+		boardX += p;
+}
+
+unsigned long long int Board::charToMask(char pos) const{
+	//note:
+	//DOES NOT WORK IF HIT ON POS & 0X88
+	//pos = ((pos & 0x7) + ((pos & 0x70) >> 1) & 0x3f);
+	char rp = (pos & 0xf0) >> 1ull;
+	unsigned long long int p = (1ull << (rp + (pos & 0x0f)));
+	//printMask(p);
+	return p;
+				//1 bit moved left by the rows moved left + col
+}
+
+
+Board::Board(){
+	boardPlaced = 0;
+	boardX = 0;
 	moves = 4;
 	xTurn = true;
+
+	setSquare(0x33, true);
+	setSquare(0x44, true);
+	setSquare(0x34, false);
+	setSquare(0x43, false);
+
+
+
 }
 bool Board::xMove() const{
 	return xTurn;
@@ -26,39 +56,42 @@ bool Board::oMove() const{
 }
 char Board::getOCount() const{
 	char ans = 0;
-	for(char iter = 0;  iter < 127; iter++)
-		if(board[iter] == 1)
-			ans++;
+	for(char r = 0; r < 8; r++){
+		for(char c = 0; c < 8; c++){
+			if(getSquare(r,c) == 1) ans++;
+		}
+	}
 	return ans;
 }
 char Board::getXCount() const{
 	char ans = 0;
-	for(char iter = 0;  iter < 127; iter++)
-		if(board[iter] == 3)
-			ans++;
+	for(char r = 0; r < 8; r++){
+		for(char c = 0; c < 8; c++){
+			if(getSquare(r,c) == 1) ans++;
+		}
+	}
 	return ans;
 }
-char Board::getSquare(char in) const{
-	return board[in];
+char Board::getSquare(char in) const{ //Return 0 for empty, 1 for O, 3 for X //TESTED, WORKS
+		unsigned long long int mask = charToMask(in);
+		if(mask & boardX) return 3;
+		if(mask & boardPlaced) return 1;
+		return 0;
 }
-char Board::getSquare(char r, char c) const{
+char Board::getSquare(char r, char c) const{ //Return 0 for empty, 1 for O, 3 for X //TESTED, WORKS
 	char pnt = c;
 	pnt += (r << 4);
-	return board[pnt];
+	return getSquare(pnt);
 }
-char Board::getSquare(int r, int c) const{
+char Board::getSquare(int r, int c) const{ //Return 0 for empty, 1 for O, 3 for X
 	char pnt = (c & 0xF);
 	pnt += ((r & 0xF) << 4);
-	return board[pnt];
+	return getSquare(pnt);
 }
 
 char Board::allowedMove(char pos) const{
-	if(board[pos]) return 0;
-	if(getSquare(pos)) return 0;
-	char conv = 0;  //guaranteed conversions
-	char reach = 0;	//possible conversions
-	char combo = 0;	//"locked" conversions
-	char ours = xTurn?3:1;
+	if(boardPlaced & charToMask(pos)) return 0; //not allowed to move into a taken spot
+
 	char row = pos >> 4;
 	char col = pos & 0xF;
 	return
@@ -74,26 +107,52 @@ char Board::allowedMove(char pos) const{
 
 char Board::testDir(char pos, char tst) const{
 	//std::cout << "Coords " << (int) pos << " Dir " << (int) tst << '\n';
-	char pC = pos & 0xF;
+	char pC = pos & 0x7;
 	char pR = pos >> 4;
 	char tR = tst >> 4;
-	char tC = tst & 0xF;
-	if(!board[tst]) return 0;
+	char tC = tst & 0x7;
+	bool 	up = (tR < pR),
+				down = (tR > pR),
+				left = (tC < pC),
+				right = (tC > pC);
+
+	char move = xTurn?3:1;
+	if(tst & 0x88) return 0;
+	if(!getSquare(tst) || getSquare(tst) == move) return 0;
+	if(pos == tst) return 0;
+	if(pC - tC != 1 && pC != tC && tC - pC != 1) return 0;
+	if(pR - tR != 1 && pR != tR && tR - pR != 1) return 0;
+	if(getSquare(pos)) return 0;
+	char ans = 0;
+	char combo = 0;
+
+	while((tR < 8 && !(tR & 0x80)) && (tC < 8 && !(tC & 0x80)) && getSquare(tR, tC)){
+		if(getSquare(tR, tC) == move){
+			ans += combo; combo = 0;
+			return ans;
+		}
+		else
+			combo++;
+		if(up) tR--;
+		if(down) tR++;
+		if(left) tC--;
+		if(right) tC++;
+	}
+
+
+	/*
+	if(!getSquare(pR, pC)) return 0;
 	if(tst & 0x88) return 0; // nope if hit on 10001000 mask, good for checking OOB
 	if(pos == tst) return 0; //obvs
 	if((pC - tC != 1 && tC - pC != 1 && pC != tC) ||
 		(pR - tR != 1 && tR - pR != 1 && pR != tR)) return 0; //return 0 if the 2 tested aren't neighbours
 
-	bool 	up = (tR < pR),
-				down = (tR > pR),
-				left = (tC < pC),
-				right = (tC > pC);
 	//std::cout << "pR:" << (int)pR << " pC:" << (int)pC << " tC:" << (int)tC << " tR:" << (int)tR << '\n';
 
 	char ans = 0;
 	char combo = 0;
 	char move = xTurn?3:1;
-	if(getSquare(tst) == move) return 0;
+	if(getSquare(tR, tC) == move) return 0;
 
 	//std::cout << "UDLR:" << up << down << left << right <<"\n";
 	while((tR < 8 && !(tR & 0x80)) && (tC < 8 && !(tC & 0x80)) && getSquare(tR, tC)){
@@ -109,6 +168,7 @@ char Board::testDir(char pos, char tst) const{
 		if(right) tC++;
 	}
 	//std::cout << "testDir done for "<< ans <<"\n";
+	*/
 	return ans;
 }
 
@@ -155,7 +215,7 @@ char Board::changeDir(char pos, char tst){
 	char tR = tst >> 4;
 	char tC = tst & 0xF;
 	char cR, cC, chg;
-	if(!board[tst]) return 0;
+	if(!getSquare(tst)) return 0;
 	if(tst & 0x88) return 0; // nope if hit on 10001000 mask, good for checking OOB
 	if(pos == tst) return 0; //obvs
 	if((pC - tC != 1 && tC - pC != 1 && pC != tC) ||
@@ -183,7 +243,7 @@ char Board::changeDir(char pos, char tst){
 				if(left){cC = tC + d;}
 				if(right){cC = tC - d;}
 				chg = rcToChar(cR, cC);
-				board[chg] = move;
+				setSquare(chg, move == 3);
 			}
 			return combo;
 		}
@@ -210,7 +270,7 @@ char Board::move(char pos){
 	changeDir(pos, rcToChar(r - 1, c-1))+
 	changeDir(pos, rcToChar(r, c - 1))+
 	changeDir(pos, rcToChar(r, c+1));
-	board[pos] = xTurn?3:1;;
+	setSquare(pos, xTurn == 3);
 	moves++;
 	xTurn = !xTurn;
 	return ans;
