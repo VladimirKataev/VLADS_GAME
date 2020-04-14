@@ -8,13 +8,36 @@ void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
 }
 
-char moveXPrediction(Board desk, bool xCalc, char depth = 3){
-  if(depth == 0) return desk.getXCount();
+double moveXPrediction(Board desk, bool xCalc, char depth = 3){
+  if(depth == 0){
+		double ans = desk.getXCount();
+		if(desk.getSquare(0,0) == 3) ans += 1;
+		if(desk.getSquare(0,0) == 1) ans -= 1;
+		if(desk.getSquare(0,7) == 3) ans += 1;
+		if(desk.getSquare(0,7) == 1) ans -= 1;
+		if(desk.getSquare(7,0) == 3) ans += 1;
+		if(desk.getSquare(7,0) == 1) ans -= 1;
+		if(desk.getSquare(7,7) == 3) ans += 1;
+		if(desk.getSquare(7,7) == 1) ans -= 1;
+		for(int c = 1; c < 7; c++){
+			if(desk.getSquare(0,c) == 3) ans += 0.5;
+			if(desk.getSquare(7,c) == 1) ans -= 0.5;
+		}
+		for(int r = 1; r < 7; r++){
+			if(desk.getSquare(r,0) == 3) ans += 0.5;
+			if(desk.getSquare(r,7) == 1) ans -= 0.5;
+		}
+		return ans;
+
+
+	}
   else{
     bool maxim = !(xCalc == desk.getXTurn());
     std::vector<char> options = desk.getAllowedMoves();
-    std::vector<char> consequences;
+    std::vector<double> consequences;
+		consequences.reserve(32);
     std::vector<Board> states;
+		states.reserve(32);
     char result;
     if(maxim)
       result = 0;
@@ -40,8 +63,10 @@ char moveXPrediction(Board desk, bool xCalc, char depth = 3){
 
 char bestMove(Board desk, bool xCalc, char depth = 3){ //return the best move, as a coord
   std::vector<Board> createdSpaces;
+	createdSpaces.reserve(32);
   std::vector<char> options = desk.getAllowedMoves();
-  std::vector<int> xCountOutcome;
+  std::vector<double> xCountOutcome;
+	xCountOutcome.reserve(32);
   int bestIndex = 0;
   bool maxim = !(xCalc == desk.getXTurn());
   for(int c = 0, l = options.size(); c < l; c++){
@@ -113,7 +138,7 @@ bool Game::move(){
       return true;
 			*/
 			auto start = std::chrono::steady_clock::now();
-			field.move(bestMove(field,false, 5));
+			field.move(bestMove(field,false, 4));
 															//False as we calculate for O
 			player1 = field.xMove();
 
