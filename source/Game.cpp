@@ -11,22 +11,47 @@ void charToString(char in){
 double moveXPrediction(Board desk, bool xCalc, char depth = 3){
   if(depth == 0){
 		double ans = desk.getXCount();
-		if(desk.getSquare(0,0) == 3) ans += 1;
-		if(desk.getSquare(0,0) == 1) ans -= 1;
-		if(desk.getSquare(0,7) == 3) ans += 1;
-		if(desk.getSquare(0,7) == 1) ans -= 1;
-		if(desk.getSquare(7,0) == 3) ans += 1;
-		if(desk.getSquare(7,0) == 1) ans -= 1;
-		if(desk.getSquare(7,7) == 3) ans += 1;
-		if(desk.getSquare(7,7) == 1) ans -= 1;
-		for(int c = 1; c < 7; c++){
-			if(desk.getSquare(0,c) == 3) ans += 0.5;
-			if(desk.getSquare(7,c) == 1) ans -= 0.5;
+		if(desk.getMoves() < 50){
+			if(desk.getSquare(0,0) == 3) ans += 1;
+			if(desk.getSquare(0,0) == 1) ans -= 1;
+			if(desk.getSquare(0,7) == 3) ans += 1;
+			if(desk.getSquare(0,7) == 1) ans -= 1;
+			if(desk.getSquare(7,0) == 3) ans += 1;
+			if(desk.getSquare(7,0) == 1) ans -= 1;
+			if(desk.getSquare(7,7) == 3) ans += 1;
+			if(desk.getSquare(7,7) == 1) ans -= 1;
+			for(int c = 2; c < 6; c++){
+				if(desk.getSquare(0,c) == 3) ans += 0.5;
+				if(desk.getSquare(7,c) == 1) ans -= 0.5;
+			}
+			for(int r = 2; r < 6; r++){
+				if(desk.getSquare(r,0) == 3) ans += 0.5;
+				if(desk.getSquare(r,7) == 1) ans -= 0.5;
+			}
+
+			if(!desk.getSquare(0,0)){
+				if(desk.getSquare(2,2) == 3) ans += 0.25;
+				if(desk.getSquare(2,2) == 1) ans -= 0.25;
+			}
+
+			if(!desk.getSquare(0,7)){
+				if(desk.getSquare(2,5) == 3) ans += 0.25;
+				if(desk.getSquare(2,5) == 1) ans -= 0.25;
+			}
+
+			if(!desk.getSquare(5,2) == 1) ans -= 0.25;
+			}
+
+			if(!desk.getSquare(7,7)){
+				if(desk.getSquare(5,5) == 3) ans += 0.25;
+				if(desk.getSquare(5,5) == 1) ans -= 0.25;
+			}
 		}
-		for(int r = 1; r < 7; r++){
-			if(desk.getSquare(r,0) == 3) ans += 0.5;
-			if(desk.getSquare(r,7) == 1) ans -= 0.5;
-		}
+
+
+
+
+
 		return ans;
 
 
@@ -138,7 +163,7 @@ bool Game::move(){
       return true;
 			*/
 			auto start = std::chrono::steady_clock::now();
-			field.move(bestMove(field,false, 4));
+			field.move(bestMove(field,false, 3));
 															//False as we calculate for O
 			player1 = field.xMove();
 
