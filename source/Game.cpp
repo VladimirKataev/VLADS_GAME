@@ -11,7 +11,7 @@ void charToString(char in){
 double moveXPrediction(Board desk, bool xCalc, char depth = 3){
   if(depth == 0){
 		double ans = desk.getXCount();
-		if(desk.getMoves() < 50){
+		if(desk.getMoves() < 56){
 			if(desk.getSquare(0,0) == 3) ans += 1;
 			if(desk.getSquare(0,0) == 1) ans -= 1;
 			if(desk.getSquare(0,7) == 3) ans += 1;
@@ -32,23 +32,59 @@ double moveXPrediction(Board desk, bool xCalc, char depth = 3){
 			if(!desk.getSquare(0,0)){
 				if(desk.getSquare(2,2) == 3) ans += 0.25;
 				if(desk.getSquare(2,2) == 1) ans -= 0.25;
+
+				if(desk.getSquare(1,0) == 3) ans -= 0.25;
+				if(desk.getSquare(1,0) == 1) ans += 0.25;
+				if(desk.getSquare(0,1) == 3) ans -= 0.25;
+				if(desk.getSquare(0,1) == 1) ans += 0.25;
+				if(desk.getSquare(1,1) == 3) ans -= 0.25;
+				if(desk.getSquare(1,1) == 1) ans += 0.25;
+
+
 			}
 
 			if(!desk.getSquare(0,7)){
 				if(desk.getSquare(2,5) == 3) ans += 0.25;
 				if(desk.getSquare(2,5) == 1) ans -= 0.25;
+
+				if(desk.getSquare(1,7) == 3) ans -= 0.25;
+				if(desk.getSquare(1,7) == 1) ans += 0.25;
+				if(desk.getSquare(0,6) == 3) ans -= 0.25;
+				if(desk.getSquare(0,6) == 1) ans += 0.25;
+				if(desk.getSquare(1,6) == 3) ans -= 0.25;
+				if(desk.getSquare(1,6) == 1) ans += 0.25;
+
 			}
 
-			if(!desk.getSquare(5,2) == 1) ans -= 0.25;
+
+			if(!desk.getSquare(7,0)){
+				if(desk.getSquare(5,3) == 3) ans += 0.25;
+				if(desk.getSquare(5,3) == 1) ans -= 0.25;
+
+				if(desk.getSquare(6,0) == 3) ans -= 0.25;
+				if(desk.getSquare(6,0) == 1) ans += 0.25;
+				if(desk.getSquare(6,1) == 3) ans -= 0.25;
+				if(desk.getSquare(6,1) == 1) ans += 0.25;
+				if(desk.getSquare(7,1) == 3) ans -= 0.25;
+				if(desk.getSquare(7,1) == 1) ans += 0.25;
+
 			}
+
 
 			if(!desk.getSquare(7,7)){
 				if(desk.getSquare(5,5) == 3) ans += 0.25;
 				if(desk.getSquare(5,5) == 1) ans -= 0.25;
+
+				if(desk.getSquare(6,6) == 3) ans -= 0.25;
+				if(desk.getSquare(6,6) == 1) ans += 0.25;
+				if(desk.getSquare(6,7) == 3) ans -= 0.25;
+				if(desk.getSquare(6,7) == 1) ans += 0.25;
+				if(desk.getSquare(7,6) == 3) ans -= 0.25;
+				if(desk.getSquare(7,6) == 1) ans += 0.25;
+
 			}
+
 		}
-
-
 
 
 
