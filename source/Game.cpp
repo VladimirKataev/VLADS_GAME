@@ -8,10 +8,14 @@ void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
 }
 
-double moveXPrediction(Board desk, bool xCalc, char depth = 3){
-  if(depth == 0){
+
+//Calculates how hard the board favours X
+double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double betaX){
+																												// alphaX is lowest guaranteed X for player X
+																												// betaX is highest guaranteed X for O player
+  if(depth == 0){ //BOTTOM LEVEL, alpha beta pruning irrelevant, valueOfBoard()
 		double ans = desk.getXCount();
-		if(desk.getMoves() < 56){
+		if(desk.getMoves() < 59){
 			if(desk.getSquare(0,0) == 3) ans += 1;
 			if(desk.getSquare(0,0) == 1) ans -= 1;
 			if(desk.getSquare(0,7) == 3) ans += 1;
@@ -29,6 +33,8 @@ double moveXPrediction(Board desk, bool xCalc, char depth = 3){
 				if(desk.getSquare(r,7) == 1) ans -= 0.5;
 			}
 
+
+			/*
 			if(!desk.getSquare(0,0)){
 				if(desk.getSquare(2,2) == 3) ans += 0.25;
 				if(desk.getSquare(2,2) == 1) ans -= 0.25;
@@ -83,6 +89,7 @@ double moveXPrediction(Board desk, bool xCalc, char depth = 3){
 				if(desk.getSquare(7,6) == 1) ans += 0.25;
 
 			}
+			*/
 
 		}
 
@@ -92,22 +99,48 @@ double moveXPrediction(Board desk, bool xCalc, char depth = 3){
 
 
 	}
-  else{
-    bool maxim = !(xCalc == desk.getXTurn());
+
+
+  else{ // alpha beta prune minmax
+
+    bool maxim = !(xCalc == desk.getXTurn()); //Are we maximising or minimising?
     std::vector<char> options = desk.getAllowedMoves();
     std::vector<double> consequences;
 		consequences.reserve(32);
     std::vector<Board> states;
 		states.reserve(32);
-    char result;
-    if(maxim)
+    double result;
+    if(maxim){
       result = 0;
-    else
-      result = 64;
+			for(int i = 0, l = options.size(); i < l; i++){
+				states.push_back(desk);
+				states.back().move(options[i]);
+				consequences.push_back(moveXPrediction(states.back(), xCalc, depth - 1, alphaX, betaX));
+				if(consequences.back() > result) result = consequences.back();
+				if(result > alphaX) alphaX = result;
+				if(betaX < alphaX) break;
+			}
+			return result;
+		}
+		else{
+			result = 64;
+			for(int i = 0, l = options.size(); i < l; i++){
+				states.push_back(desk);
+				states.back().move(options[i]);
+				consequences.push_back(moveXPrediction(states.back(), xCalc, depth - 1, alphaX, betaX));
+				if(consequences.back() < result) result = consequences.back();
+				if(result < betaX) betaX = result;
+				if(betaX > alphaX) break;
+			}
+			return result;
+		}
+
+
+		/*
     for(int i = 0, l = options.size(); i < l; i++){
       states.push_back(desk);
       states.back().move(options[i]);
-      consequences.push_back(moveXPrediction(states.back(), xCalc, depth - 1));
+      consequences.push_back(moveXPrediction(states.back(), xCalc, time / l));
     }
     for(int i = 0, l = consequences.size(); i < l; i++){
       if(maxim && consequences[i] > result){
@@ -117,12 +150,15 @@ double moveXPrediction(Board desk, bool xCalc, char depth = 3){
         result = consequences[i];
       }
     }
+		*/
     return result;
   }
+	return 578548765; //we should never get here anyway
 }
 
 
-char bestMove(Board desk, bool xCalc, char depth = 3){ //return the best move, as a coord
+char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, as a coord
+																																	//timeToEval is in nanoseconds
   std::vector<Board> createdSpaces;
 	createdSpaces.reserve(32);
   std::vector<char> options = desk.getAllowedMoves();
@@ -133,7 +169,7 @@ char bestMove(Board desk, bool xCalc, char depth = 3){ //return the best move, a
   for(int c = 0, l = options.size(); c < l; c++){
     createdSpaces.push_back(desk);
     createdSpaces.back().move(options[c]);
-    xCountOutcome.push_back(moveXPrediction(createdSpaces.back(), xCalc, depth));
+    xCountOutcome.push_back(moveXPrediction(createdSpaces.back(), xCalc, depth, -100.1, 100.1));
     if(maxim && xCountOutcome.back() > xCountOutcome[bestIndex]) bestIndex = c;
     else if(!maxim && xCountOutcome.back() < xCountOutcome[bestIndex]) bestIndex = c;
   }
@@ -199,7 +235,7 @@ bool Game::move(){
       return true;
 			*/
 			auto start = std::chrono::steady_clock::now();
-			field.move(bestMove(field,false, 3));
+			field.move(bestMove(field,false, 5));
 															//False as we calculate for O
 			player1 = field.xMove();
 

@@ -257,9 +257,11 @@ char Board::move(char pos){
 	changeDir(pos, rcToChar(r - 1, c-1))+
 	changeDir(pos, rcToChar(r, c - 1))+
 	changeDir(pos, rcToChar(r, c+1));
-	setSquare(pos, xTurn);
-	moves++;
-	xTurn = !xTurn;
+	if(ans){
+		setSquare(pos, xTurn);
+		moves++;
+		xTurn = !xTurn;
+	}
 	return ans;
 
 }
