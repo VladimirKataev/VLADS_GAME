@@ -4,156 +4,158 @@
 #include<vector>
 #include<algorithm>
 #include<chrono>
+
 void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
 }
 
 
-//Calculates how hard the board favours X
-double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double betaX){
-																												// alphaX is lowest guaranteed X for player X
-																												// betaX is highest guaranteed X for O player
-  if(depth == 0){ //BOTTOM LEVEL, alpha beta pruning irrelevant, valueOfBoard()
-		double ans = desk.getXCount();
-		if(desk.getMoves() < 59){
-			if(desk.getSquare(0,0) == 3) ans += 1;
-			if(desk.getSquare(0,0) == 1) ans -= 1;
-			if(desk.getSquare(0,7) == 3) ans += 1;
-			if(desk.getSquare(0,7) == 1) ans -= 1;
-			if(desk.getSquare(7,0) == 3) ans += 1;
-			if(desk.getSquare(7,0) == 1) ans -= 1;
-			if(desk.getSquare(7,7) == 3) ans += 1;
-			if(desk.getSquare(7,7) == 1) ans -= 1;
-			for(int c = 2; c < 6; c++){
-				if(desk.getSquare(0,c) == 3) ans += 0.5;
-				if(desk.getSquare(7,c) == 1) ans -= 0.5;
+double boardEval(Board desk){ //The higher, the more X-ish the board
+	double ans = 0.0 + desk.getXCount();
+
+	if(desk.getAllowedMoves().size() == 0) desk.changeSide(); //account for no-move scenarios
+
+	if(desk.getAllowedMoves().size() == 0) //GO FOR THE KILL
+		return (desk.getXCount() > desk.getOCount())?1000:-1000;
+
+
+
+	if(desk.getMoves() < 59){ //While heuristics are still important
+
+
+		//PER EDGE: edge counts for +1, as do the 2 ortho neighbours, as unconvertible
+		//note, if edge not taken, don't go neighbour
+		//----------------------------------------------------------------------------
+		if(desk.getSquare(0,0)){
+			ans += (desk.getSquare(0,0) == 3)?1:-1;
+			if(desk.getSquare(1,0) == desk.getSquare(0,0)){
+				ans += (desk.getSquare(0,0)==3)?1:-1;
 			}
-			for(int r = 2; r < 6; r++){
-				if(desk.getSquare(r,0) == 3) ans += 0.5;
-				if(desk.getSquare(r,7) == 1) ans -= 0.5;
+			if(desk.getSquare(0,1) == desk.getSquare(0,0)){
+				ans += (desk.getSquare(0,0)==3)?1:-1;
 			}
-
-
-			/*
-			if(!desk.getSquare(0,0)){
-				if(desk.getSquare(2,2) == 3) ans += 0.25;
-				if(desk.getSquare(2,2) == 1) ans -= 0.25;
-
-				if(desk.getSquare(1,0) == 3) ans -= 0.25;
-				if(desk.getSquare(1,0) == 1) ans += 0.25;
-				if(desk.getSquare(0,1) == 3) ans -= 0.25;
-				if(desk.getSquare(0,1) == 1) ans += 0.25;
-				if(desk.getSquare(1,1) == 3) ans -= 0.25;
-				if(desk.getSquare(1,1) == 1) ans += 0.25;
-
-
+		}
+		else{
+			if(desk.getSquare(1,0)){
+				ans += (desk.getSquare(1,0)==1)?1:-1;
 			}
-
-			if(!desk.getSquare(0,7)){
-				if(desk.getSquare(2,5) == 3) ans += 0.25;
-				if(desk.getSquare(2,5) == 1) ans -= 0.25;
-
-				if(desk.getSquare(1,7) == 3) ans -= 0.25;
-				if(desk.getSquare(1,7) == 1) ans += 0.25;
-				if(desk.getSquare(0,6) == 3) ans -= 0.25;
-				if(desk.getSquare(0,6) == 1) ans += 0.25;
-				if(desk.getSquare(1,6) == 3) ans -= 0.25;
-				if(desk.getSquare(1,6) == 1) ans += 0.25;
-
+			if(desk.getSquare(0,1)){
+				ans += (desk.getSquare(0,1)==1)?1:-1;
 			}
-
-
-			if(!desk.getSquare(7,0)){
-				if(desk.getSquare(5,3) == 3) ans += 0.25;
-				if(desk.getSquare(5,3) == 1) ans -= 0.25;
-
-				if(desk.getSquare(6,0) == 3) ans -= 0.25;
-				if(desk.getSquare(6,0) == 1) ans += 0.25;
-				if(desk.getSquare(6,1) == 3) ans -= 0.25;
-				if(desk.getSquare(6,1) == 1) ans += 0.25;
-				if(desk.getSquare(7,1) == 3) ans -= 0.25;
-				if(desk.getSquare(7,1) == 1) ans += 0.25;
-
+			if(desk.getSquare(1,1)){
+				ans += (desk.getSquare(1,1) == 1)?1:-1;
 			}
-
-
-			if(!desk.getSquare(7,7)){
-				if(desk.getSquare(5,5) == 3) ans += 0.25;
-				if(desk.getSquare(5,5) == 1) ans -= 0.25;
-
-				if(desk.getSquare(6,6) == 3) ans -= 0.25;
-				if(desk.getSquare(6,6) == 1) ans += 0.25;
-				if(desk.getSquare(6,7) == 3) ans -= 0.25;
-				if(desk.getSquare(6,7) == 1) ans += 0.25;
-				if(desk.getSquare(7,6) == 3) ans -= 0.25;
-				if(desk.getSquare(7,6) == 1) ans += 0.25;
-
-			}
-			*/
-
 		}
 
 
 
-		return ans;
+		if(desk.getSquare(0,7)){
+			ans += (desk.getSquare(0,7) == 3)?1:-1;
+			if(desk.getSquare(1,7) == desk.getSquare(0,7)){
+				ans += (desk.getSquare(1,7)==3)?1:-1;
+			}
+			if(desk.getSquare(0,6) == desk.getSquare(0,7)){
+				ans += (desk.getSquare(0,6)==3)?1:-1;
+			}
+		}
+		else{
+			if(desk.getSquare(1,7)){
+				ans += (desk.getSquare(1,7)==1)?1:-1;
+			}
+			if(desk.getSquare(0,6)){
+				ans += (desk.getSquare(0,6)==1)?1:-1;
+			}
+			if(desk.getSquare(1,6)){
+				ans += (desk.getSquare(1,6) == 1)?1:-1;
+			}
+
+		}
 
 
+		if(desk.getSquare(7,0)){
+			ans += (desk.getSquare(7,1) == 3)?1:-1;
+			if(desk.getSquare(7,1) == desk.getSquare(7,0)){
+				ans += (desk.getSquare(7,1)==3)?1:-1;
+			}
+			if(desk.getSquare(6,0) == desk.getSquare(7,0)){
+				ans += (desk.getSquare(6,0)==3)?1:-1;
+			}
+		}
+		else{
+			if(desk.getSquare(7,1)){
+				ans += (desk.getSquare(7,1)==1)?1:-1;
+			}
+			if(desk.getSquare(6,0)){
+				ans += (desk.getSquare(6,0)==1)?1:-1;
+			}
+			if(desk.getSquare(6,1)){
+				ans += (desk.getSquare(1,1) == 1)?1:-1;
+			}
+
+		}
+
+		if(desk.getSquare(7,7)){
+			ans += (desk.getSquare(6,7) == 3)?1:-1;
+			if(desk.getSquare(6,7) == desk.getSquare(7,7)){
+				ans += (desk.getSquare(1,7)==3)?1:-1;
+			}
+			if(desk.getSquare(7,6) == desk.getSquare(7,7)){
+				ans += (desk.getSquare(7,6)==3)?1:-1;
+			}
+		}
+		else{
+			if(desk.getSquare(6,7)){
+				ans += (desk.getSquare(6,7)==1)?1:-1;
+			}
+			if(desk.getSquare(7,6)){
+				ans += (desk.getSquare(7,6)==1)?1:-1;
+			}
+			if(desk.getSquare(6,6)){
+				ans += (desk.getSquare(6,6) == 1)?1:-1;
+			}
+
+		}
+		//UN-Per EDGE
+		//-----------------------------
+	}
+
+	return ans;
+}
+
+
+//Calculates how hard the board favours X
+double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double betaX){
+																												// alphaX is lowest guaranteed X for player X ~Looking to make high
+																												// betaX is highest guaranteed X for O player ~Looking to make low
+
+  if(depth == 0){ //BOTTOM LEVEL, alpha beta pruning irrelevant, valueOfBoard()
+		return boardEval(desk);
 	}
 
 
   else{ // alpha beta prune minmax
-
-    bool maxim = !(xCalc == desk.getXTurn()); //Are we maximising or minimising?
-    std::vector<char> options = desk.getAllowedMoves();
-    std::vector<double> consequences;
-		consequences.reserve(32);
-    std::vector<Board> states;
-		states.reserve(32);
-    double result;
-    if(maxim){
-      result = 0;
-			for(int i = 0, l = options.size(); i < l; i++){
+		bool maxing = !(xCalc == desk.getXTurn());
+		std::vector<char> nudges = desk.getAllowedMoves();
+		std::vector<Board> states; states.reserve(32);
+		std::vector<double> consequences; consequences.reserve(32);
+		for(int i = 0, l = nudges.size();  i < l && betaX > alphaX; i++){ // for each possible move
+			if(maxing){ //we want highest alpha
 				states.push_back(desk);
-				states.back().move(options[i]);
-				consequences.push_back(moveXPrediction(states.back(), xCalc, depth - 1, alphaX, betaX));
-				if(consequences.back() > result) result = consequences.back();
-				if(result > alphaX) alphaX = result;
-				if(betaX < alphaX) break;
+				states.back().move(nudges[i]);
+				consequences.push_back(moveXPrediction(states.back(), xCalc, depth -1, alphaX, betaX));
+				if(consequences.back() > alphaX) alphaX = consequences.back();
 			}
-			return result;
-		}
-		else{
-			result = 64;
-			for(int i = 0, l = options.size(); i < l; i++){
+			else{//we want lowest beta
 				states.push_back(desk);
-				states.back().move(options[i]);
-				consequences.push_back(moveXPrediction(states.back(), xCalc, depth - 1, alphaX, betaX));
-				if(consequences.back() < result) result = consequences.back();
-				if(result < betaX) betaX = result;
-				if(betaX > alphaX) break;
+				states.back().move(nudges[i]);
+				consequences.push_back(moveXPrediction(states.back(), xCalc, depth -1, alphaX, betaX));
+				if(consequences.back() < betaX) betaX = consequences.back();
 			}
-			return result;
 		}
 
+		return maxing?alphaX:betaX;
 
-		/*
-    for(int i = 0, l = options.size(); i < l; i++){
-      states.push_back(desk);
-      states.back().move(options[i]);
-      consequences.push_back(moveXPrediction(states.back(), xCalc, time / l));
-    }
-    for(int i = 0, l = consequences.size(); i < l; i++){
-      if(maxim && consequences[i] > result){
-        result = consequences[i];
-      }
-      else if(!maxim && consequences[i] < result){
-        result = consequences[i];
-      }
-    }
-		*/
-    return result;
   }
-	return 578548765; //we should never get here anyway
 }
 
 
@@ -182,7 +184,6 @@ Game::Game(){
 }
 bool Game::move(){
   std::cout << field.boardString() << '\n';
-	//std::cout << "pos 33 = " << field.getSquare((char)(3),(char)(3)) << std::endl;
   options = field.getAllowedMoves();
   char move;
   int row;
@@ -222,20 +223,8 @@ bool Game::move(){
     }
     else{ //------------------------------------------Enemy AI time
           //Currently, it's bad
-			/*
-      char preference = 0;
-      for(int i = 0, l = options.size(); i < l; i++){
-        if(field.allowedMove(options[i]) > preference){
-          preference = field.allowedMove(options[i]);
-          move = options[i];
-        }
-      }
-      field.move(move);
-      player1 = field.xMove();
-      return true;
-			*/
 			auto start = std::chrono::steady_clock::now();
-			field.move(bestMove(field,false, 5));
+			field.move(bestMove(field,false, 4));
 															//False as we calculate for O
 			player1 = field.xMove();
 
