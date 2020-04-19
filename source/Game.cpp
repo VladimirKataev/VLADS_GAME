@@ -136,20 +136,21 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
   else{ // alpha beta prune minmax
 		bool maxing = !(xCalc == desk.getXTurn());
 		std::vector<char> nudges = desk.getAllowedMoves();
-		std::vector<Board> states; states.reserve(32);
-		std::vector<double> consequences; consequences.reserve(32);
-		for(int i = 0, l = nudges.size();  i < l && betaX > alphaX; i++){ // for each possible move
+		int l = nudges.size();
+		Board states[l];
+		double consequences[l];
+		for(int i = 0;  i < l && betaX > alphaX; i++){ // for each possible move
 			if(maxing){ //we want highest alpha
-				states.push_back(desk);
-				states.back().move(nudges[i]);
-				consequences.push_back(moveXPrediction(states.back(), xCalc, depth -1, alphaX, betaX));
-				if(consequences.back() > alphaX) alphaX = consequences.back();
+				states[i] = (desk);
+				states[i].move(nudges[i]);
+				consequences[i] = (moveXPrediction(states[i], xCalc, depth -1, alphaX, betaX));
+				if(consequences[i] > alphaX) alphaX = consequences[i];
 			}
 			else{//we want lowest beta
-				states.push_back(desk);
-				states.back().move(nudges[i]);
-				consequences.push_back(moveXPrediction(states.back(), xCalc, depth -1, alphaX, betaX));
-				if(consequences.back() < betaX) betaX = consequences.back();
+				states[i] = desk;
+				states[i].move(nudges[i]);
+				consequences[i] = moveXPrediction(states[i], xCalc, depth -1, alphaX, betaX);
+				if(consequences[i] < betaX) betaX = consequences[i];
 			}
 		}
 
@@ -161,19 +162,20 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
 
 char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, as a coord
 																																	//timeToEval is in nanoseconds
-  std::vector<Board> createdSpaces;
-	createdSpaces.reserve(32);
   std::vector<char> options = desk.getAllowedMoves();
-  std::vector<double> xCountOutcome;
-	xCountOutcome.reserve(32);
+	int l = options.size();
+	Board createdSpaces[l];
+	//createdSpaces.reserve(32);
+  double xCountOutcome[l];
+	//xCountOutcome.reserve(32);
   int bestIndex = 0;
   bool maxim = !(xCalc == desk.getXTurn());
-  for(int c = 0, l = options.size(); c < l; c++){
-    createdSpaces.push_back(desk);
-    createdSpaces.back().move(options[c]);
-    xCountOutcome.push_back(moveXPrediction(createdSpaces.back(), xCalc, depth, -100.1, 100.1));
-    if(maxim && xCountOutcome.back() > xCountOutcome[bestIndex]) bestIndex = c;
-    else if(!maxim && xCountOutcome.back() < xCountOutcome[bestIndex]) bestIndex = c;
+  for(int c = 0; c < l; c++){
+    createdSpaces[c] = desk;
+    createdSpaces[c].move(options[c]);
+    xCountOutcome[c] = (moveXPrediction(createdSpaces[c], xCalc, depth, -100.1, 100.1));
+    if(maxim && xCountOutcome[c] > xCountOutcome[bestIndex]) bestIndex = c;
+    else if(!maxim && xCountOutcome[c] < xCountOutcome[bestIndex]) bestIndex = c;
   }
   return options[bestIndex];
 }
