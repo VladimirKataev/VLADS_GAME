@@ -137,19 +137,19 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
 		bool maxing = !(xCalc == desk.getXTurn());
 		std::vector<char> nudges = desk.getAllowedMoves();
 		int l = nudges.size();
-		Board states[l];
+		Board state; //No longer an array, shortens space by l 
 		double consequences[l];
 		for(int i = 0;  i < l && betaX > alphaX; i++){ // for each possible move
 			if(maxing){ //we want highest alpha
-				states[i] = (desk);
-				states[i].move(nudges[i]);
-				consequences[i] = (moveXPrediction(states[i], xCalc, depth -1, alphaX, betaX));
+				state = (desk);
+				state.move(nudges[i]);
+				consequences[i] = (moveXPrediction(state, xCalc, depth -1, alphaX, betaX));
 				if(consequences[i] > alphaX) alphaX = consequences[i];
 			}
 			else{//we want lowest beta
-				states[i] = desk;
-				states[i].move(nudges[i]);
-				consequences[i] = moveXPrediction(states[i], xCalc, depth -1, alphaX, betaX);
+				state = desk;
+				state.move(nudges[i]);
+				consequences[i] = moveXPrediction(state, xCalc, depth -1, alphaX, betaX);
 				if(consequences[i] < betaX) betaX = consequences[i];
 			}
 		}
@@ -164,16 +164,17 @@ char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, 
 																																	//timeToEval is in nanoseconds
   std::vector<char> options = desk.getAllowedMoves();
 	int l = options.size();
-	Board createdSpaces[l];
+	//Board createdSpaces[l];
+	Board createdSpace; //No longer an array, shortens space by l
 	//createdSpaces.reserve(32);
   double xCountOutcome[l];
 	//xCountOutcome.reserve(32);
   int bestIndex = 0;
   bool maxim = !(xCalc == desk.getXTurn());
   for(int c = 0; c < l; c++){
-    createdSpaces[c] = desk;
-    createdSpaces[c].move(options[c]);
-    xCountOutcome[c] = (moveXPrediction(createdSpaces[c], xCalc, depth, -100.1, 100.1));
+    createdSpace = desk;
+    createdSpace.move(options[c]);
+    xCountOutcome[c] = (moveXPrediction(createdSpace, xCalc, depth, -100.1, 100.1));
     if(maxim && xCountOutcome[c] > xCountOutcome[bestIndex]) bestIndex = c;
     else if(!maxim && xCountOutcome[c] < xCountOutcome[bestIndex]) bestIndex = c;
   }
@@ -226,7 +227,7 @@ bool Game::move(){
     else{ //------------------------------------------Enemy AI time
           //Currently, it's bad
 			auto start = std::chrono::steady_clock::now();
-			field.move(bestMove(field,false, 4));
+			field.move(bestMove(field,false, 6));
 															//False as we calculate for O
 			player1 = field.xMove();
 

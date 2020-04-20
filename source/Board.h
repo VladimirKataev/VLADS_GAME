@@ -22,7 +22,16 @@ public:
 	//Board(const Board& copy);// is not needed as no pointers to outside self
 	//~Board();// is not needed as everything fits in one
 
-	unsigned long long int charToMask(char pos) const;
+	static unsigned long long int charToMask(char pos) {
+		//note:
+		//DOES NOT WORK IF HIT ON POS & 0X88
+		//pos = ((pos & 0x7) + ((pos & 0x70) >> 1) & 0x3f);
+		char rp = (pos & 0xf0) >> 1;
+		unsigned long long int p = (1ull << (rp + (pos & 7ull)));
+		//printMask(p);
+		return p;
+					//1 bit moved left by the rows moved left + col
+	}
 
 	char move(char pos); //the char return is how many are converted
 	char testDir(char mov, char tst) const;

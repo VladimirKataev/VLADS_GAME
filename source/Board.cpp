@@ -25,18 +25,6 @@ void Board::setSquare(char pos, bool isX){
 		boardX &= ~p;
 }
 
-unsigned long long int Board::charToMask(char pos) const{
-	//note:
-	//DOES NOT WORK IF HIT ON POS & 0X88
-	//pos = ((pos & 0x7) + ((pos & 0x70) >> 1) & 0x3f);
-	char rp = (pos & 0xf0) >> 1;
-	unsigned long long int p = (1ull << (rp + (pos & 7ull)));
-	//printMask(p);
-	return p;
-				//1 bit moved left by the rows moved left + col
-}
-
-
 Board::Board(){
 	boardPlaced = 0;
 	boardX = 0;
