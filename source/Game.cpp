@@ -5,121 +5,156 @@
 #include<algorithm>
 #include<chrono>
 
+#define calcDepth 5
+
+
 void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
 }
 
 
 double boardEval(Board desk){ //The higher, the more X-ish the board
-	double ans = 0.0 + desk.getXCount();
 
 	if(desk.getAllowedMoves().size() == 0) desk.changeSide(); //account for no-move scenarios
 
 	if(desk.getAllowedMoves().size() == 0) //GO FOR THE KILL
 		return (desk.getXCount() > desk.getOCount())?1000:-1000;
 
+	double ans = 0.0 + desk.getXCount();
+	double impurities = 0.0;
+	char pieces = desk.getMoves();
 
+	if(pieces < (64 - calcDepth)){ //While heuristics are still important
 
-	if(desk.getMoves() < 59){ //While heuristics are still important
 
 
 		//PER EDGE: edge counts for +1, as do the 2 ortho neighbours, as unconvertible
 		//note, if edge not taken, don't go neighbour
 		//----------------------------------------------------------------------------
-		if(desk.getSquare(0,0)){
-			ans += (desk.getSquare(0,0) == 3)?1:-1;
-			if(desk.getSquare(1,0) == desk.getSquare(0,0)){
-				ans += (desk.getSquare(0,0)==3)?1:-1;
+
+
+		char 	tl = desk.getSquare(0,0),
+					tr = desk.getSquare(0,7),
+					bl = desk.getSquare(7,0),
+					br = desk.getSquare(7,7),
+
+					tlr = desk.getSquare(0,1),
+					tlb = desk.getSquare(1,0),
+					tld = desk.getSquare(1,1),
+
+					trl = desk.getSquare(0,6),
+					trb = desk.getSquare(1,7),
+					trd = desk.getSquare(1,6),
+
+					blr = desk.getSquare(7,1),
+					blt = desk.getSquare(6,0),
+					bld = desk.getSquare(6,1),
+
+					brl = desk.getSquare(7,6),
+					brt = desk.getSquare(6,7),
+					brd = desk.getSquare(6,6);
+
+
+
+		if(tl){
+			impurities += (tl == 3)?1:-1;
+			if(tlb == tl){
+				impurities += (tl==3)?1:-1;
 			}
-			if(desk.getSquare(0,1) == desk.getSquare(0,0)){
-				ans += (desk.getSquare(0,0)==3)?1:-1;
+			if(tlr == desk.getSquare(0,0)){
+				impurities += (desk.getSquare(0,0)==3)?1:-1;
 			}
 		}
 		else{
-			if(desk.getSquare(1,0)){
-				ans += (desk.getSquare(1,0)==1)?1:-1;
+			if(tlb){
+				impurities += (tlb==1)?1:-1;
 			}
-			if(desk.getSquare(0,1)){
-				ans += (desk.getSquare(0,1)==1)?1:-1;
+			if(tlr){
+				impurities += (tlr==1)?1:-1;
 			}
-			if(desk.getSquare(1,1)){
-				ans += (desk.getSquare(1,1) == 1)?1:-1;
-			}
-		}
-
-
-
-		if(desk.getSquare(0,7)){
-			ans += (desk.getSquare(0,7) == 3)?1:-1;
-			if(desk.getSquare(1,7) == desk.getSquare(0,7)){
-				ans += (desk.getSquare(1,7)==3)?1:-1;
-			}
-			if(desk.getSquare(0,6) == desk.getSquare(0,7)){
-				ans += (desk.getSquare(0,6)==3)?1:-1;
+			if(tld){
+				impurities += (tld == 1)?1:-1;
 			}
 		}
-		else{
-			if(desk.getSquare(1,7)){
-				ans += (desk.getSquare(1,7)==1)?1:-1;
-			}
-			if(desk.getSquare(0,6)){
-				ans += (desk.getSquare(0,6)==1)?1:-1;
-			}
-			if(desk.getSquare(1,6)){
-				ans += (desk.getSquare(1,6) == 1)?1:-1;
-			}
-
-		}
 
 
-		if(desk.getSquare(7,0)){
-			ans += (desk.getSquare(7,1) == 3)?1:-1;
-			if(desk.getSquare(7,1) == desk.getSquare(7,0)){
-				ans += (desk.getSquare(7,1)==3)?1:-1;
+
+		if(tr){
+			impurities += (tr == 3)?1:-1;
+			if(trb == tr){
+				impurities += (trb==3)?1:-1;
 			}
-			if(desk.getSquare(6,0) == desk.getSquare(7,0)){
-				ans += (desk.getSquare(6,0)==3)?1:-1;
+			if(trl == tr){
+				impurities += (trl==3)?1:-1;
 			}
 		}
 		else{
-			if(desk.getSquare(7,1)){
-				ans += (desk.getSquare(7,1)==1)?1:-1;
+			if(trb){
+				impurities += (trb==1)?1:-1;
 			}
-			if(desk.getSquare(6,0)){
-				ans += (desk.getSquare(6,0)==1)?1:-1;
+			if(trl){
+				impurities += (trl==1)?1:-1;
 			}
-			if(desk.getSquare(6,1)){
-				ans += (desk.getSquare(1,1) == 1)?1:-1;
+			if(trd){
+				impurities += (trd == 1)?1:-1;
 			}
 
 		}
 
-		if(desk.getSquare(7,7)){
-			ans += (desk.getSquare(6,7) == 3)?1:-1;
-			if(desk.getSquare(6,7) == desk.getSquare(7,7)){
-				ans += (desk.getSquare(1,7)==3)?1:-1;
+
+		if(bl){
+			impurities += (blr == 3)?1:-1;
+			if(blr == bl){
+				impurities += (blr==3)?1:-1;
 			}
-			if(desk.getSquare(7,6) == desk.getSquare(7,7)){
-				ans += (desk.getSquare(7,6)==3)?1:-1;
+			if(blt == bl){
+				impurities += (blt==3)?1:-1;
 			}
 		}
 		else{
-			if(desk.getSquare(6,7)){
-				ans += (desk.getSquare(6,7)==1)?1:-1;
+			if(blr){
+				impurities += (blr==1)?1:-1;
 			}
-			if(desk.getSquare(7,6)){
-				ans += (desk.getSquare(7,6)==1)?1:-1;
+			if(blt){
+				impurities += (blt==1)?1:-1;
 			}
-			if(desk.getSquare(6,6)){
-				ans += (desk.getSquare(6,6) == 1)?1:-1;
+			if(bld){
+				impurities += (tld == 1)?1:-1;
 			}
 
 		}
+
+		if(br){
+			impurities += (brt == 3)?1:-1;
+			if(brt == br){
+				impurities += (trb==3)?1:-1;
+			}
+			if(brl == desk.getSquare(7,7)){
+				impurities += (brl==3)?1:-1;
+			}
+		}
+		else{
+			if(brt){
+				impurities += (brt==1)?1:-1;
+			}
+			if(brl){
+				impurities += (brl==1)?1:-1;
+			}
+			if(brd){
+				impurities += (brd == 1)?1:-1;
+			}
+
+		}
+
+		//Total getSquare calls for entire board: 80
+		//vs previous 120
+		//Now to do it with no if elses=
+
 		//UN-Per EDGE
 		//-----------------------------
 	}
 
-	return ans;
+	return ans + (impurities * ((64 - pieces) / (64 - calcDepth)));
 }
 
 
@@ -137,7 +172,7 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
 		bool maxing = !(xCalc == desk.getXTurn());
 		std::vector<char> nudges = desk.getAllowedMoves();
 		int l = nudges.size();
-		Board state; //No longer an array, shortens space by l 
+		Board state; //No longer an array, shortens space by l
 		double consequences[l];
 		for(int i = 0;  i < l && betaX > alphaX; i++){ // for each possible move
 			if(maxing){ //we want highest alpha
@@ -227,8 +262,10 @@ bool Game::move(){
     else{ //------------------------------------------Enemy AI time
           //Currently, it's bad
 			auto start = std::chrono::steady_clock::now();
-			field.move(bestMove(field,false, 6));
-															//False as we calculate for O
+			move = bestMove(field,false, calcDepth);
+														//False as we calculate for O
+			field.move(move);
+			std::cout << "AI moved "; charToString(move);
 			player1 = field.xMove();
 
 			auto end = std::chrono::steady_clock::now();
