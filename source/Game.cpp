@@ -5,7 +5,7 @@
 #include<algorithm>
 #include<chrono>
 
-#define calcDepth 5
+#define CALCDEPTH 6
 
 
 void charToString(char in){
@@ -24,7 +24,7 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	double impurities = 0.0;
 	char pieces = desk.getMoves();
 
-	if(pieces < (64 - calcDepth)){ //While heuristics are still important
+	if(pieces < (64 - CALCDEPTH)){ //While heuristics are still important
 
 
 
@@ -53,16 +53,13 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 					brl = desk.getSquare(7,6),
 					brt = desk.getSquare(6,7),
 					brd = desk.getSquare(6,6);
-
-
-
 		if(tl){
-			impurities += (tl == 3)?1:-1;
+			impurities += (tl == 3)?2:-2;
 			if(tlb == tl){
 				impurities += (tl==3)?1:-1;
 			}
-			if(tlr == desk.getSquare(0,0)){
-				impurities += (desk.getSquare(0,0)==3)?1:-1;
+			if(tlr == tl){
+				impurities += (tl==3)?1:-1;
 			}
 		}
 		else{
@@ -76,9 +73,6 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 				impurities += (tld == 1)?1:-1;
 			}
 		}
-
-
-
 		if(tr){
 			impurities += (tr == 3)?1:-1;
 			if(trb == tr){
@@ -98,10 +92,7 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 			if(trd){
 				impurities += (trd == 1)?1:-1;
 			}
-
 		}
-
-
 		if(bl){
 			impurities += (blr == 3)?1:-1;
 			if(blr == bl){
@@ -129,7 +120,7 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 			if(brt == br){
 				impurities += (trb==3)?1:-1;
 			}
-			if(brl == desk.getSquare(7,7)){
+			if(brl == br){
 				impurities += (brl==3)?1:-1;
 			}
 		}
@@ -145,16 +136,12 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 			}
 
 		}
-
 		//Total getSquare calls for entire board: 80
 		//vs previous 120
 		//Now to do it with no if elses=
-
-		//UN-Per EDGE
-		//-----------------------------
 	}
 
-	return ans + (impurities * ((64 - pieces) / (64 - calcDepth)));
+	return ans + (impurities * ((64 - pieces) / (64 - CALCDEPTH)));
 }
 
 
@@ -162,34 +149,36 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double betaX){
 																												// alphaX is lowest guaranteed X for player X ~Looking to make high
 																												// betaX is highest guaranteed X for O player ~Looking to make low
-
   if(depth == 0){ //BOTTOM LEVEL, alpha beta pruning irrelevant, valueOfBoard()
 		return boardEval(desk);
 	}
-
-
   else{ // alpha beta prune minmax
 		bool maxing = !(xCalc == desk.getXTurn());
-		std::vector<char> nudges = desk.getAllowedMoves();
+		std::vector<char> nudges = desk.getAllowedMoves(); //NOTE TO SELF, CAN BE OPTIMISED OUT
 		int l = nudges.size();
 		Board state; //No longer an array, shortens space by l
-		double consequences[l];
-		for(int i = 0;  i < l && betaX > alphaX; i++){ // for each possible move
-			if(maxing){ //we want highest alpha
-				state = (desk);
-				state.move(nudges[i]);
-				consequences[i] = (moveXPrediction(state, xCalc, depth -1, alphaX, betaX));
-				if(consequences[i] > alphaX) alphaX = consequences[i];
+		double notableConsequence = maxing?alphaX:betaX;
+		double analysis;
+		for(int i = 0;  i < l && alphaX < betaX; i++){ // NEEDS A FIX
+
+			if(maxing){ // Attempt to raise alpha
+					state = desk;
+					state.move(nudges[i]);
+					analysis = moveXPrediction(state, xCalc, depth-1, alphaX, betaX);
+					alphaX = (analysis > alphaX)?analysis:alphaX;
+					notableConsequence = alphaX;
 			}
-			else{//we want lowest beta
+			else{
 				state = desk;
 				state.move(nudges[i]);
-				consequences[i] = moveXPrediction(state, xCalc, depth -1, alphaX, betaX);
-				if(consequences[i] < betaX) betaX = consequences[i];
+				analysis = moveXPrediction(state, xCalc, depth-1, alphaX, betaX);
+				betaX = (analysis < betaX)?analysis:betaX;
+				notableConsequence = betaX;
 			}
+
 		}
 
-		return maxing?alphaX:betaX;
+		return notableConsequence;
 
   }
 }
@@ -206,12 +195,20 @@ char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, 
 	//xCountOutcome.reserve(32);
   int bestIndex = 0;
   bool maxim = !(xCalc == desk.getXTurn());
+	double alpha = -99999.0;
+	double beta = 99999.0;
   for(int c = 0; c < l; c++){
     createdSpace = desk;
     createdSpace.move(options[c]);
-    xCountOutcome[c] = (moveXPrediction(createdSpace, xCalc, depth, -100.1, 100.1));
-    if(maxim && xCountOutcome[c] > xCountOutcome[bestIndex]) bestIndex = c;
-    else if(!maxim && xCountOutcome[c] < xCountOutcome[bestIndex]) bestIndex = c;
+    xCountOutcome[c] = (moveXPrediction(createdSpace, xCalc, depth, alpha, beta));
+    if(maxim && xCountOutcome[c] > xCountOutcome[bestIndex]){
+			bestIndex = c;
+			alpha = xCountOutcome[c];
+		}
+    else if(!maxim && xCountOutcome[c] < xCountOutcome[bestIndex]){
+			bestIndex = c;
+			beta = xCountOutcome[c];
+		}
   }
   return options[bestIndex];
 }
@@ -262,8 +259,8 @@ bool Game::move(){
     else{ //------------------------------------------Enemy AI time
           //Currently, it's bad
 			auto start = std::chrono::steady_clock::now();
-			move = bestMove(field,false, calcDepth);
-														//False as we calculate for O
+			move = bestMove(field,false, CALCDEPTH);
+														//False as we calculate for O, not X
 			field.move(move);
 			std::cout << "AI moved "; charToString(move);
 			player1 = field.xMove();
