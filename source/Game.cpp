@@ -5,143 +5,62 @@
 #include<algorithm>
 #include<chrono>
 
-#define CALCDEPTH 6
+#define CALCDEPTH 8
 
 
 void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
 }
 
+int incidences = 0; //used to analyse the number of boards analysed in AB tree
+
+const
+double startMask[64] = {5 ,-1,2,2,2,2,-1, 5, //Weight of spots by location at the start
+  											-1,-1,1,1,1,1,-1,-1,
+											  2 , 1,2,1,1,2, 1, 2,
+											  2 , 1,1,1,1,1, 1, 2,
+											  2 , 1,1,1,1,1, 1, 2,
+											  2 , 1,2,1,1,2, 1, 2,
+											  -1,-1,1,1,1,1,-1,-1,
+											  5 ,-1,2,2,2,2,-1, 5
+										};
+const double endMask[64] =
+										 {1,1,1,1,1,1,1,1, //Weight of spots at the end
+											1,1,1,1,1,1,1,1,
+											1,1,1,1,1,1,1,1,
+											1,1,1,1,1,1,1,1,
+											1,1,1,1,1,1,1,1,
+											1,1,1,1,1,1,1,1,
+											1,1,1,1,1,1,1,1,
+											1,1,1,1,1,1,1,1
+										};
+
 
 double boardEval(Board desk){ //The higher, the more X-ish the board
+	incidences++;
+	/*
+	std::vector<char> muvz = desk.getAllowedMoves();
+	if(muvz.size() == 0) {desk.changeSide(); muvz = desk.getAllowedMoves();}//account for no-move scenarios
 
-	if(desk.getAllowedMoves().size() == 0) desk.changeSide(); //account for no-move scenarios
-
-	if(desk.getAllowedMoves().size() == 0) //GO FOR THE KILL
+	if(muvz.size() == 0) //GO FOR THE KILL
 		return (desk.getXCount() > desk.getOCount())?1000:-1000;
-
-	double ans = 0.0 + desk.getXCount();
+	*/
+	double ans = 0.0;
 	double impurities = 0.0;
+	unsigned long long int boardPlaced = desk.boardPlaced;
+	unsigned long long int boardX = desk.boardX;
+	unsigned long long int mask = 1ull;
 	char pieces = desk.getMoves();
 
-	if(pieces < (64 - CALCDEPTH)){ //While heuristics are still important
-
-
-
-		//PER EDGE: edge counts for +1, as do the 2 ortho neighbours, as unconvertible
-		//note, if edge not taken, don't go neighbour
-		//----------------------------------------------------------------------------
-
-
-		char 	tl = desk.getSquare(0,0),
-					tr = desk.getSquare(0,7),
-					bl = desk.getSquare(7,0),
-					br = desk.getSquare(7,7),
-
-					tlr = desk.getSquare(0,1),
-					tlb = desk.getSquare(1,0),
-					tld = desk.getSquare(1,1),
-
-					trl = desk.getSquare(0,6),
-					trb = desk.getSquare(1,7),
-					trd = desk.getSquare(1,6),
-
-					blr = desk.getSquare(7,1),
-					blt = desk.getSquare(6,0),
-					bld = desk.getSquare(6,1),
-
-					brl = desk.getSquare(7,6),
-					brt = desk.getSquare(6,7),
-					brd = desk.getSquare(6,6);
-		if(tl){
-			impurities += (tl == 3)?2:-2;
-			if(tlb == tl){
-				impurities += (tl==3)?1:-1;
-			}
-			if(tlr == tl){
-				impurities += (tl==3)?1:-1;
-			}
-		}
-		else{
-			if(tlb){
-				impurities += (tlb==1)?1:-1;
-			}
-			if(tlr){
-				impurities += (tlr==1)?1:-1;
-			}
-			if(tld){
-				impurities += (tld == 1)?1:-1;
-			}
-		}
-		if(tr){
-			impurities += (tr == 3)?1:-1;
-			if(trb == tr){
-				impurities += (trb==3)?1:-1;
-			}
-			if(trl == tr){
-				impurities += (trl==3)?1:-1;
-			}
-		}
-		else{
-			if(trb){
-				impurities += (trb==1)?1:-1;
-			}
-			if(trl){
-				impurities += (trl==1)?1:-1;
-			}
-			if(trd){
-				impurities += (trd == 1)?1:-1;
-			}
-		}
-		if(bl){
-			impurities += (blr == 3)?1:-1;
-			if(blr == bl){
-				impurities += (blr==3)?1:-1;
-			}
-			if(blt == bl){
-				impurities += (blt==3)?1:-1;
-			}
-		}
-		else{
-			if(blr){
-				impurities += (blr==1)?1:-1;
-			}
-			if(blt){
-				impurities += (blt==1)?1:-1;
-			}
-			if(bld){
-				impurities += (tld == 1)?1:-1;
-			}
-
-		}
-
-		if(br){
-			impurities += (brt == 3)?1:-1;
-			if(brt == br){
-				impurities += (trb==3)?1:-1;
-			}
-			if(brl == br){
-				impurities += (brl==3)?1:-1;
-			}
-		}
-		else{
-			if(brt){
-				impurities += (brt==1)?1:-1;
-			}
-			if(brl){
-				impurities += (brl==1)?1:-1;
-			}
-			if(brd){
-				impurities += (brd == 1)?1:-1;
-			}
-
-		}
-		//Total getSquare calls for entire board: 80
-		//vs previous 120
-		//Now to do it with no if elses=
+	double maskPos;
+	for(int m = 0; m < 64; m++){
+		maskPos = (startMask[m]*(64.0 - pieces) + endMask[m]*(pieces)) / (64.0); //Find out the weight of the individual spot at this time
+		ans += (double)(boardPlaced & 1ull) * (-1 + 2*(int)(boardX & 1ull)) * maskPos;
+		boardX >>= 1;
+		boardPlaced >>= 1;
 	}
 
-	return ans + (impurities * ((64 - pieces) / (64 - CALCDEPTH)));
+	return ans;
 }
 
 
@@ -159,8 +78,7 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
 		Board state; //No longer an array, shortens space by l
 		double notableConsequence = maxing?alphaX:betaX;
 		double analysis;
-		for(int i = 0;  i < l && alphaX < betaX; i++){ // NEEDS A FIX
-
+		for(int i = 0;  i < l && alphaX < betaX; i++){
 			if(maxing){ // Attempt to raise alpha
 					state = desk;
 					state.move(nudges[i]);
@@ -254,11 +172,11 @@ bool Game::move(){
       move += (row << 4);
       field.move(move);
       player1 = field.xMove();
-      return true;
     }
     else{ //------------------------------------------Enemy AI time
           //Currently, it's bad
 			auto start = std::chrono::steady_clock::now();
+			incidences = 0;
 			move = bestMove(field,false, CALCDEPTH);
 														//False as we calculate for O, not X
 			field.move(move);
@@ -267,9 +185,9 @@ bool Game::move(){
 
 			auto end = std::chrono::steady_clock::now();
 			std::chrono::duration<double> elapsed_seconds = end-start;
-	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
-			return true;
+	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << incidences<<" boards\n";
     }
+		std::cout << "BoardValue = " << boardEval(field) << '\n';
   }
   return true;
 }

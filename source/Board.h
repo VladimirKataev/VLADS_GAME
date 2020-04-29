@@ -5,22 +5,25 @@
 class Board{
 //Use a char to designate a move
 
-//(char & 240) >> 4 to get row#
-//(char & 15) to get col#
-unsigned long long int boardPlaced; //64 bits
-unsigned long long int boardX;			//64 bits
-
-unsigned char moves = 0;			//8 bits
-bool xTurn;										//8 bits
-
-//144 BITS, or 18 BYTES
-//OVER 10 FOLD SPACE OPTIMISATION
 
 
 public:
 	Board();
 	//Board(const Board& copy);// is not needed as no pointers to outside self
 	//~Board();// is not needed as everything fits in one
+
+
+	//(char & 240) >> 4 to get row#
+	//(char & 15) to get col#
+	unsigned long long int boardPlaced; //64 bits
+	unsigned long long int boardX;			//64 bits
+
+	unsigned char moves = 0;			//8 bits
+	bool xTurn;										//8 bits
+
+	//144 BITS, or 18 BYTES
+	//OVER 10 FOLD SPACE OPTIMISATION
+
 
 	static unsigned long long int charToMask(char pos) {
 		//note:
