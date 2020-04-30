@@ -5,7 +5,7 @@
 #include<algorithm>
 #include<chrono>
 
-#define CALCDEPTH 8
+#define CALCDEPTH 7
 
 
 void charToString(char in){
@@ -15,15 +15,16 @@ void charToString(char in){
 int incidences = 0; //used to analyse the number of boards analysed in AB tree
 
 const
-double startMask[64] = {5 ,-1,2,2,2,2,-1, 5, //Weight of spots by location at the start
-  											-1,-1,1,1,1,1,-1,-1,
-											  2 , 1,2,1,1,2, 1, 2,
-											  2 , 1,1,1,1,1, 1, 2,
-											  2 , 1,1,1,1,1, 1, 2,
-											  2 , 1,2,1,1,2, 1, 2,
-											  -1,-1,1,1,1,1,-1,-1,
-											  5 ,-1,2,2,2,2,-1, 5
+double startMask[64] = {5 ,0,3,2,2,3,0, 5, //Weight of spots by location at the start
+  											0 ,0,1,1,1,1,0, 0,
+											  3 ,1,2,1,1,2,1, 3,
+											  2 ,1,1,1,1,1,1, 2,
+											  2 ,1,1,1,1,1,1, 2,
+											  3 ,1,2,1,1,2,1, 3,
+											  0 ,0,1,1,1,1,0, 0,
+											  5 ,0,3,2,2,3,0, 5
 										};
+/*
 const double endMask[64] =
 										 {1,1,1,1,1,1,1,1, //Weight of spots at the end
 											1,1,1,1,1,1,1,1,
@@ -34,7 +35,7 @@ const double endMask[64] =
 											1,1,1,1,1,1,1,1,
 											1,1,1,1,1,1,1,1
 										};
-
+*/
 
 double boardEval(Board desk){ //The higher, the more X-ish the board
 	incidences++;
@@ -49,12 +50,46 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	double impurities = 0.0;
 	unsigned long long int boardPlaced = desk.boardPlaced;
 	unsigned long long int boardX = desk.boardX;
-	unsigned long long int mask = 1ull;
+	//unsigned long long int mask = 1ull;
 	char pieces = desk.getMoves();
+	double mask[64];
+	for(int i  = 0; i < 64; i++)
+		mask[i] = startMask[i];
+		
+	if(boardPlaced & 1ull){ //check the top left corner
+		mask[1] = 2;
+		mask[8] = 2;
+		mask[9] = 2;
+	}
+
+	if(boardPlaced & (1ull << 8)){ //check the top right corner
+		mask[1] = 2;
+		mask[8] = 2;
+		mask[9] = 2;
+	}
+
+	if(boardPlaced & (1ull << 56)){ //check the bottom left corner
+		mask[48] = 2;
+		mask[49] = 2;
+		mask[57] = 2;
+	}
+
+	if(boardPlaced & (1ull << 64)){ //check the bottom right corner
+		mask[63] = 2;
+		mask[63 - 8] = 2;
+		mask[63 - 9] = 2;
+	}
+
+
+
+
+
+
+
 
 	double maskPos;
 	for(int m = 0; m < 64; m++){
-		maskPos = (startMask[m]*(64.0 - pieces) + endMask[m]*(pieces)) / (64.0); //Find out the weight of the individual spot at this time
+		maskPos = (pieces < 64- CALCDEPTH )?startMask[m]:1.0; //Find out the weight of the individual spot at this time
 		ans += (double)(boardPlaced & 1ull) * (-1 + 2*(int)(boardX & 1ull)) * maskPos;
 		boardX >>= 1;
 		boardPlaced >>= 1;
