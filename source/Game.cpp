@@ -55,17 +55,17 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	double mask[64];
 	for(int i  = 0; i < 64; i++)
 		mask[i] = startMask[i];
-		
+
 	if(boardPlaced & 1ull){ //check the top left corner
-		mask[1] = 2;
+		mask[0] = 2;
 		mask[8] = 2;
 		mask[9] = 2;
 	}
 
-	if(boardPlaced & (1ull << 8)){ //check the top right corner
-		mask[1] = 2;
-		mask[8] = 2;
-		mask[9] = 2;
+	if(boardPlaced & (1ull << 7)){ //check the top right corner
+		mask[6] = 2;
+		mask[14] = 2;
+		mask[15] = 2;
 	}
 
 	if(boardPlaced & (1ull << 56)){ //check the bottom left corner
@@ -74,10 +74,10 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 		mask[57] = 2;
 	}
 
-	if(boardPlaced & (1ull << 64)){ //check the bottom right corner
+	if(boardPlaced & (1ull << 63)){ //check the bottom right corner
 		mask[63] = 2;
-		mask[63 - 8] = 2;
-		mask[63 - 9] = 2;
+		mask[55] = 2;
+		mask[62] = 2;
 	}
 
 
