@@ -5,7 +5,7 @@
 #include<algorithm>
 #include<chrono>
 
-#define CALCDEPTH 7
+#define CALCDEPTH 6
 
 
 void charToString(char in){
@@ -15,14 +15,14 @@ void charToString(char in){
 int incidences = 0; //used to analyse the number of boards analysed in AB tree
 
 const
-double startMask[64] = {5 ,0,3,2,2,3,0, 5, //Weight of spots by location at the start
-  											0 ,0,1,1,1,1,0, 0,
+double startMask[64] = {5 ,-1,3,2,2,3,-1, 5, //Weight of spots by location at the start
+  											-1,-1,1,1,1,1,-1,-1,
 											  3 ,1,2,1,1,2,1, 3,
 											  2 ,1,1,1,1,1,1, 2,
 											  2 ,1,1,1,1,1,1, 2,
 											  3 ,1,2,1,1,2,1, 3,
-											  0 ,0,1,1,1,1,0, 0,
-											  5 ,0,3,2,2,3,0, 5
+											  -1,-1,1,1,1,1,-1,-1,
+											  5 ,-1,3,2,2,3,-1, 5
 										};
 /*
 const double endMask[64] =
@@ -53,33 +53,37 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	//unsigned long long int mask = 1ull;
 	char pieces = desk.getMoves();
 	double mask[64];
-	for(int i  = 0; i < 64; i++)
+	for(int i  = 0; i < 64; i++){
 		mask[i] = startMask[i];
 
-	if(boardPlaced & 1ull){ //check the top left corner
-		mask[0] = 2;
-		mask[8] = 2;
-		mask[9] = 2;
-	}
+		if(boardPlaced & 1ull){ //check the top left corner
+			mask[0] = 10;
+			mask[8] = 2;
+			mask[9] = 2;
+			mask[1] = 2;
+		}
 
-	if(boardPlaced & (1ull << 7)){ //check the top right corner
-		mask[6] = 2;
-		mask[14] = 2;
-		mask[15] = 2;
-	}
+		if(boardPlaced & (1ull << 7)){ //check the top right corner
+			mask[7] = 10;
+			mask[14] = 2;
+			mask[15] = 2;
+			mask[6] = 2;
+		}
 
-	if(boardPlaced & (1ull << 56)){ //check the bottom left corner
-		mask[48] = 2;
-		mask[49] = 2;
-		mask[57] = 2;
-	}
+		if(boardPlaced & (1ull << 56)){ //check the bottom left corner
+			mask[48] = 2;
+			mask[49] = 2;
+			mask[57] = 2;
+			mask[56] = 10;
+		}
 
-	if(boardPlaced & (1ull << 63)){ //check the bottom right corner
-		mask[63] = 2;
-		mask[55] = 2;
-		mask[62] = 2;
+		if(boardPlaced & (1ull << 63)){ //check the bottom right corner
+			mask[63] = 10;
+			mask[55] = 2;
+			mask[62] = 2;
+			mask[54] = 2;
+		}
 	}
-
 
 
 
@@ -89,7 +93,7 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 
 	double maskPos;
 	for(int m = 0; m < 64; m++){
-		maskPos = (pieces < 64- CALCDEPTH )?startMask[m]:1.0; //Find out the weight of the individual spot at this time
+		maskPos = (pieces < 64- CALCDEPTH )?mask[m]:1.0; //Find out the weight of the individual spot at this time
 		ans += (double)(boardPlaced & 1ull) * (-1 + 2*(int)(boardX & 1ull)) * maskPos;
 		boardX >>= 1;
 		boardPlaced >>= 1;
