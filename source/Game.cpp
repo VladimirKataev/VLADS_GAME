@@ -8,14 +8,15 @@
 #define CALCDEPTH 6
 
 
+
 void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
 }
 
 int incidences = 0; //used to analyse the number of boards analysed in AB tree
 
-const
-double startMask[64] = {5 ,-1,3,2,2,3,-1, 5, //Weight of spots by location at the start
+/*
+const double startMask[64] = {5 ,-1,3,2,2,3,-1, 5, //Weight of spots by location at the start
   											-1,-1,1,1,1,1,-1,-1,
 											  3 ,1,2,1,1,2,1, 3,
 											  2 ,1,1,1,1,1,1, 2,
@@ -24,6 +25,22 @@ double startMask[64] = {5 ,-1,3,2,2,3,-1, 5, //Weight of spots by location at th
 											  -1,-1,1,1,1,1,-1,-1,
 											  5 ,-1,3,2,2,3,-1, 5
 										};
+*/
+
+const unsigned long long int cornerMask =
+	(1ull) + (1ull << 7) + (1ull << 56) + (1ull << 63);
+
+const unsigned long long int edgeMask =
+	cornerMask +
+	(1ull << 1) + (1ull << 2) + (1ull << 3) + (1ull << 4) + (1ull << 5) + (1ull << 6)
+	+ (1ull << 8)+ 	(1ull << 15)
+	+ (1ull << 16)+  (1ull << 23)
+	+ (1ull << 24)+   (1ull << 31)
+	+ (1ull << 32)+   (1ull << 39)
+	+ (1ull << 40)+   (1ull << 47)
+	+ (1ull << 48)+   (1ull << 55)
+	+ (1ull << 57) + (1ull << 58) + (1ull << 59) + (1ull << 60) + (1ull << 61) + (1ull << 62);
+
 /*
 const double endMask[64] =
 										 {1,1,1,1,1,1,1,1, //Weight of spots at the end
@@ -38,7 +55,7 @@ const double endMask[64] =
 */
 
 double boardEval(Board desk){ //The higher, the more X-ish the board
-	incidences++;
+	incidences++; // arghh dev stuffs
 	/*
 	std::vector<char> muvz = desk.getAllowedMoves();
 	if(muvz.size() == 0) {desk.changeSide(); muvz = desk.getAllowedMoves();}//account for no-move scenarios
@@ -46,59 +63,29 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	if(muvz.size() == 0) //GO FOR THE KILL
 		return (desk.getXCount() > desk.getOCount())?1000:-1000;
 	*/
-	double ans = 0.0;
-	double impurities = 0.0;
-	unsigned long long int boardPlaced = desk.boardPlaced;
-	unsigned long long int boardX = desk.boardX;
-	//unsigned long long int mask = 1ull;
-	char pieces = desk.getMoves();
-	double mask[64];
-	for(int i  = 0; i < 64; i++){
-		mask[i] = startMask[i];
+	int xCount = desk.getXCount();
+	int oCount = desk.getOCount();
 
-		if(boardPlaced & 1ull){ //check the top left corner
-			mask[0] = 10;
-			mask[8] = 2;
-			mask[9] = 2;
-			mask[1] = 2;
-		}
+	double ans = xCount - oCount; // basic
+	double factor = (80 - oCount - xCount)/16;
+	unsigned long long int cornerMaskDynamic = cornerMask;
+	unsigned long long int edgeMaskDynamic = edgeMask;
+	unsigned long long int boardPlacedDynamic = desk.boardPlaced;
+	unsigned long long int boardXDynamic = desk.boardX;
+	double tmp = 0.0;
+	while(cornerMaskDynamic){
+		tmp = 0.0;
+		tmp = ((boardPlacedDynamic & 1ull) * (-1.0 + 2.0*(boardXDynamic & 1ull))); //-1, 0, or 1
+		tmp *= 1.0 + (factor * (edgeMaskDynamic & 1ull)) ; //Decide if corner factor applies or not
+		tmp *= 1.0 + (factor * (cornerMaskDynamic & 1ull)); //
 
-		if(boardPlaced & (1ull << 7)){ //check the top right corner
-			mask[7] = 10;
-			mask[14] = 2;
-			mask[15] = 2;
-			mask[6] = 2;
-		}
+		ans += tmp;
 
-		if(boardPlaced & (1ull << 56)){ //check the bottom left corner
-			mask[48] = 2;
-			mask[49] = 2;
-			mask[57] = 2;
-			mask[56] = 10;
-		}
-
-		if(boardPlaced & (1ull << 63)){ //check the bottom right corner
-			mask[63] = 10;
-			mask[55] = 2;
-			mask[62] = 2;
-			mask[54] = 2;
-		}
+		cornerMaskDynamic >>= 1ull;
+		edgeMaskDynamic >>= 1ull;
+		boardPlacedDynamic >>= 1ull;
+		boardXDynamic >>= 1ull;
 	}
-
-
-
-
-
-
-
-	double maskPos;
-	for(int m = 0; m < 64; m++){
-		maskPos = (pieces < 64- CALCDEPTH )?mask[m]:1.0; //Find out the weight of the individual spot at this time
-		ans += (double)(boardPlaced & 1ull) * (-1 + 2*(int)(boardX & 1ull)) * maskPos;
-		boardX >>= 1;
-		boardPlaced >>= 1;
-	}
-
 	return ans;
 }
 
