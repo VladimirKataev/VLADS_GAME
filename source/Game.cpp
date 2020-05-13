@@ -5,9 +5,6 @@
 #include<algorithm>
 #include<chrono>
 
-#define CALCDEPTH 6
-
-
 
 void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
@@ -63,18 +60,18 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	if(muvz.size() == 0) //GO FOR THE KILL
 		return (desk.getXCount() > desk.getOCount())?1000:-1000;
 	*/
-	int xCount = desk.getXCount();
-	int oCount = desk.getOCount();
+	//int xCount = desk.getXCount();
+	//int oCount = desk.getOCount();
 
-	double ans = xCount - oCount; // basic
-	double factor = (80 - oCount - xCount)/16;
+	double ans = 0.0; // basic
+	double factor = (80 - desk.getMoves())/16;
 	unsigned long long int cornerMaskDynamic = cornerMask;
 	unsigned long long int edgeMaskDynamic = edgeMask;
 	unsigned long long int boardPlacedDynamic = desk.boardPlaced;
 	unsigned long long int boardXDynamic = desk.boardX;
 	double tmp = 0.0;
 	while(cornerMaskDynamic){
-		tmp = 0.0;
+
 		tmp = ((boardPlacedDynamic & 1ull) * (-1.0 + 2.0*(boardXDynamic & 1ull))); //-1, 0, or 1
 		tmp *= 1.0 + (factor * (edgeMaskDynamic & 1ull)) ; //Decide if corner factor applies or not
 		tmp *= 1.0 + (factor * (cornerMaskDynamic & 1ull)); //
@@ -161,6 +158,10 @@ Game::Game(){
   skippedTurn = false;
   player1 = true;
 }
+
+
+int thinkfast = 7; //How many moves ahead AI thinks
+
 bool Game::move(){
   std::cout << field.boardString() << '\n';
   options = field.getAllowedMoves();
@@ -203,7 +204,7 @@ bool Game::move(){
           //Currently, it's bad
 			auto start = std::chrono::steady_clock::now();
 			incidences = 0;
-			move = bestMove(field,false, CALCDEPTH);
+			move = bestMove(field,false, thinkfast);
 														//False as we calculate for O, not X
 			field.move(move);
 			std::cout << "AI moved "; charToString(move);
@@ -211,7 +212,11 @@ bool Game::move(){
 
 			auto end = std::chrono::steady_clock::now();
 			std::chrono::duration<double> elapsed_seconds = end-start;
-	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << incidences<<" boards\n";
+	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << incidences<<" boards to " << thinkfast <<" moves ahead\n";
+
+			if(elapsed_seconds.count() < 0.1) thinkfast++;
+			else if (elapsed_seconds.count() > 0.25) thinkfast--;
+
     }
 		std::cout << "BoardValue = " << boardEval(field) << '\n';
   }
