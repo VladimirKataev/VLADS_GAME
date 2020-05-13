@@ -51,7 +51,7 @@ public:
 	bool getXTurn() const;
 	char getXCount() const;
 	char getOCount() const;
-	char rcToChar(char r, char c) const;
+	//char rcToChar(char r, char c) const;
 	char rcToChar(int r, int c) const;
 
 	std::string boardString() const;
