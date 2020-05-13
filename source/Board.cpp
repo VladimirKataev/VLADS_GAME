@@ -162,10 +162,11 @@ char Board::testDir(char pos, char tst) const{
 	*/
 	return ans;
 }
-
+/*
 char Board::rcToChar(char r, char c) const{
 	return (char)(c + (r << 4));
 }
+*/
 char Board::rcToChar(int r, int c) const{
 	return (char)(c + (r << 4));
 }
