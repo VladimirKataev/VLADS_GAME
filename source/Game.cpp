@@ -4,7 +4,7 @@
 #include<vector>
 #include<algorithm>
 #include<chrono>
-
+#include<limits>
 
 void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
@@ -38,6 +38,8 @@ const unsigned long long int edgeMask =
 	+ (1ull << 48)+   (1ull << 55)
 	+ (1ull << 57) + (1ull << 58) + (1ull << 59) + (1ull << 60) + (1ull << 61) + (1ull << 62);
 
+const unsigned long long int fullmask = -1LL; //Evil floating point
+
 /*
 const double endMask[64] =
 										 {1,1,1,1,1,1,1,1, //Weight of spots at the end
@@ -63,12 +65,19 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	//int xCount = desk.getXCount();
 	//int oCount = desk.getOCount();
 
+	unsigned long long int boardPlacedDynamic = desk.boardPlaced;
+	unsigned long long int boardXDynamic = desk.boardX;
+
+	if(boardPlacedDynamic == fullmask){
+		if(desk.getXCount() == 32) return 0;
+		else if (desk.getXCount() > 32) return 99999.0;
+		return -99999.0;
+	}
+
 	double ans = 0.0; // basic
 	double factor = (80 - desk.getMoves())/16;
 	unsigned long long int cornerMaskDynamic = cornerMask;
 	unsigned long long int edgeMaskDynamic = edgeMask;
-	unsigned long long int boardPlacedDynamic = desk.boardPlaced;
-	unsigned long long int boardXDynamic = desk.boardX;
 	double tmp = 0.0;
 	while(cornerMaskDynamic){
 
@@ -120,13 +129,12 @@ int sergEval(uint64_t x, uint64_t o) {
         oCount=bitCountDense(o);
     //histo[xCount+oCount]++;
 
-		/* ---------IGNORING FOR OWN SPEED. ERROR EXPECTED AT FULL BOARD
+
     if( xCount+oCount == 64 ) { // Board is full
         if(xCount == oCount) return 0;
         return xCount > oCount ? 99999 : -99999;
     }
-		*/
-    int gamePhaseFactor = (80-oCount-xCount)/16,
+	  int gamePhaseFactor = (80-oCount-xCount)/16,
         xSides = bitCountSparse(x & edges),
         oSides = bitCountSparse(o & edges),
         xCorners = bitCountSparse(x & corners),
