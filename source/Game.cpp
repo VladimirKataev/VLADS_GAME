@@ -95,9 +95,18 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
 		return boardEval(desk);
 	}
   else{ // alpha beta prune minmax
-		bool maxing = !(xCalc == desk.getXTurn());
+
 		std::vector<char> nudges = desk.getAllowedMoves(); //NOTE TO SELF, CAN BE OPTIMISED OUT
 		int l = nudges.size();
+		if(l == 0){
+			desk.changeSide();
+		}
+		nudges = desk.getAllowedMoves(); l = nudges.size();
+		if(l == 0) return boardEval(desk);
+
+
+		bool maxing = !(xCalc == desk.getXTurn());
+
 		Board state; //No longer an array, shortens space by l
 		double notableConsequence = maxing?alphaX:betaX;
 		double analysis;
