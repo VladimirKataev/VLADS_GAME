@@ -164,8 +164,8 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
 		int l = nudges.size();
 		if(l == 0){
 			desk.changeSide();
+			nudges = desk.getAllowedMoves(); l = nudges.size();
 		}
-		nudges = desk.getAllowedMoves(); l = nudges.size();
 		if(l == 0) return boardEval(desk);
 
 
