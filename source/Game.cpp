@@ -29,14 +29,14 @@ const unsigned long long int cornerMask =
 
 const unsigned long long int edgeMask =
 	cornerMask +
-	(1ull << 1) + (1ull << 2) + (1ull << 3) + (1ull << 4) + (1ull << 5) + (1ull << 6)
-	+ (1ull << 8)+ 	(1ull << 15)
+	/*(1ull << 1) +*/ (1ull << 2) + (1ull << 3) + (1ull << 4) + (1ull << 5) + /*(1ull << 6)*/
+	//+ (1ull << 8)+ 	(1ull << 15)
 	+ (1ull << 16)+  (1ull << 23)
 	+ (1ull << 24)+   (1ull << 31)
 	+ (1ull << 32)+   (1ull << 39)
 	+ (1ull << 40)+   (1ull << 47)
-	+ (1ull << 48)+   (1ull << 55)
-	+ (1ull << 57) + (1ull << 58) + (1ull << 59) + (1ull << 60) + (1ull << 61) + (1ull << 62);
+	//+ (1ull << 48)+   (1ull << 55)
+	+ /*(1ull << 57)*/ + (1ull << 58) + (1ull << 59) + (1ull << 60) + (1ull << 61) /*+ (1ull << 62)*/;
 
 /*
 const double endMask[64] =
