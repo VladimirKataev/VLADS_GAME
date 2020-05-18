@@ -29,14 +29,14 @@ const unsigned long long int cornerMask =
 
 const unsigned long long int edgeMask =
 	cornerMask +
-	/*(1ull << 1) +*/ (1ull << 2) + (1ull << 3) + (1ull << 4) + (1ull << 5) + /*(1ull << 6)*/
-	//+ (1ull << 8)+ 	(1ull << 15)
+	(1ull << 1) + (1ull << 2) + (1ull << 3) + (1ull << 4) + (1ull << 5) + (1ull << 6)
+	+ (1ull << 8)+ 	(1ull << 15)
 	+ (1ull << 16)+  (1ull << 23)
 	+ (1ull << 24)+   (1ull << 31)
 	+ (1ull << 32)+   (1ull << 39)
 	+ (1ull << 40)+   (1ull << 47)
-	//+ (1ull << 48)+   (1ull << 55)
-	+ /*(1ull << 57)*/ + (1ull << 58) + (1ull << 59) + (1ull << 60) + (1ull << 61) /*+ (1ull << 62)*/;
+	+ (1ull << 48)+   (1ull << 55)
+	+ (1ull << 57) + (1ull << 58) + (1ull << 59) + (1ull << 60) + (1ull << 61) + (1ull << 62);
 
 /*
 const double endMask[64] =
@@ -85,6 +85,62 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	}
 	return ans;
 }
+
+// BitCount quickest for args that have only a few 1's
+static int bitCountSparse(uint64_t m) {
+    int ret = 0;
+    for(; m ; m &= (m-1))
+        ret++;
+    return ret;
+}
+
+// BitCount quickest for args that may have any number of 1's
+static int bitCountDense(uint64_t m) {
+    uint64_t acc = m & 0x0101010101010101ULL;
+    for(int i=1; i<8; i++)
+        acc += (0x0101010101010101ULL & (m >> i));
+    acc += (acc >> 32);
+    acc += (acc >> 16);
+    acc += (acc >> 8);
+    return (int)(acc & 255ull);
+}
+
+
+
+static uint64_t col(unsigned n) { return 0x0101010101010101ULL << n; }
+static uint64_t row(unsigned n) { return 0xFFULL << (n << 3); }
+
+uint64_t edges = row(0) | row(7) | col(0) | col(7);
+uint64_t corners = (row(0) | row(7)) & (col(0) | col(7));
+
+int sergEval(uint64_t x, uint64_t o) {
+    //uint64_t x = b.x, o = b.o;
+    //incidence++;
+    int xCount=bitCountDense(x),
+        oCount=bitCountDense(o);
+    //histo[xCount+oCount]++;
+
+		/* ---------IGNORING FOR OWN SPEED. ERROR EXPECTED AT FULL BOARD
+    if( xCount+oCount == 64 ) { // Board is full
+        if(xCount == oCount) return 0;
+        return xCount > oCount ? 99999 : -99999;
+    }
+		*/
+    int gamePhaseFactor = (80-oCount-xCount)/16,
+        xSides = bitCountSparse(x & edges),
+        oSides = bitCountSparse(o & edges),
+        xCorners = bitCountSparse(x & corners),
+        oCorners = bitCountSparse(o & corners);
+
+    return xCount - oCount +
+        gamePhaseFactor * (xSides - oSides +
+                           gamePhaseFactor * (xCorners - oCorners));
+}
+
+
+//sergBoard vladBoardToSergBoard
+
+
 
 
 //Calculates how hard the board favours X
@@ -171,6 +227,18 @@ Game::Game(){
 
 int thinkfast = 7; //How many moves ahead AI thinks
 
+
+void compareHeuristics(Board desk){
+	int vladVal = boardEval(desk);
+	//																			x																o
+	int sergVal = sergEval(desk.boardPlaced & desk.boardX, desk.boardPlaced - desk.boardX );
+
+	if(vladVal == sergVal) std::cout << "The sergey and the vlad algorithm agree\n";
+	else std::cout << "The 2 disagree, Vlad : " << vladVal << " Sergey : " << sergVal << '\n';
+}
+
+
+
 bool Game::move(){
   std::cout << field.boardString() << '\n';
   options = field.getAllowedMoves();
@@ -191,7 +259,9 @@ bool Game::move(){
   else{
     skippedTurn = false;
     for_each(begin(options), end(options), charToString);
+
     std::cout << '\n';
+		compareHeuristics(field);
     if(player1){
       do{
         std::cout << "Enter row:";
