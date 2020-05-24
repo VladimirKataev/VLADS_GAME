@@ -10,7 +10,7 @@ void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
 }
 
-int incidences = 0; //used to analyse the number of boards analysed in AB tree
+//int incidences = 0; //used to analyse the number of boards analysed in AB tree
 
 /*
 const double startMask[64] = {5 ,-1,3,2,2,3,-1, 5, //Weight of spots by location at the start
@@ -54,7 +54,7 @@ const double endMask[64] =
 */
 
 double boardEval(Board desk){ //The higher, the more X-ish the board
-	incidences++; // arghh dev stuffs
+	//incidences++; // arghh dev stuffs
 	/*
 	std::vector<char> muvz = desk.getAllowedMoves();
 	if(muvz.size() == 0) {desk.changeSide(); muvz = desk.getAllowedMoves();}//account for no-move scenarios
@@ -290,7 +290,7 @@ bool Game::move(){
     else{ //------------------------------------------Enemy AI time
           //Currently, it's bad
 			auto start = std::chrono::steady_clock::now();
-			incidences = 0;
+			//incidences = 0;
 			move = bestMove(field,false, thinkfast);
 														//False as we calculate for O, not X
 			field.move(move);
@@ -299,7 +299,7 @@ bool Game::move(){
 
 			auto end = std::chrono::steady_clock::now();
 			std::chrono::duration<double> elapsed_seconds = end-start;
-	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << incidences<<" boards to " << thinkfast <<" moves ahead\n";
+	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << /*incidences<<" boards to " << */ thinkfast <<" moves ahead\n";
 
 			if(elapsed_seconds.count() < 0.1) thinkfast++;
 			else if (elapsed_seconds.count() > 0.25) thinkfast--;
