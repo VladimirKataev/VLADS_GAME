@@ -12,7 +12,7 @@ void charToString(char in){
 
 //int incidences = 0; //used to analyse the number of boards analysed in AB tree
 
-/*
+/* //Remnant of past heuristics
 const double startMask[64] = {5 ,-1,3,2,2,3,-1, 5, //Weight of spots by location at the start
   											-1,-1,1,1,1,1,-1,-1,
 											  3 ,1,2,1,1,2,1, 3,
@@ -40,7 +40,7 @@ const unsigned long long int edgeMask =
 
 const unsigned long long int fullmask = -1LL; //Evil floating point
 
-/*
+/* //Remnant of past heuristics
 const double endMask[64] =
 										 {1,1,1,1,1,1,1,1, //Weight of spots at the end
 											1,1,1,1,1,1,1,1,
@@ -56,13 +56,15 @@ const double endMask[64] =
 double boardEval(Board desk){ //The higher, the more X-ish the board
 	//incidences++; // arghh dev stuffs
 	/*
-	std::vector<char> muvz = desk.getAllowedMoves();
+	std::vector<char> muvz = desk.getAllowedMoves(); //Evaluated at wrong parts
 	if(muvz.size() == 0) {desk.changeSide(); muvz = desk.getAllowedMoves();}//account for no-move scenarios
 
 	if(muvz.size() == 0) //GO FOR THE KILL
 		return (desk.getXCount() > desk.getOCount())?1000:-1000;
 	*/
-	//int xCount = desk.getXCount();
+
+
+	//int xCount = desk.getXCount(); //Removed because has 0(64) runtime. as had the second one
 	//int oCount = desk.getOCount();
 
 	unsigned long long int boardPlacedDynamic = desk.boardPlaced;
@@ -79,14 +81,17 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	unsigned long long int cornerMaskDynamic = cornerMask;
 	unsigned long long int edgeMaskDynamic = edgeMask;
 	double tmp = 0.0;
-	while(cornerMaskDynamic){
+	while(boardPlacedDynamic){
 
 		tmp = ((boardPlacedDynamic & 1ull) * (-1.0 + 2.0*(boardXDynamic & 1ull))); //-1, 0, or 1
+
 		//if(edgeMaskDynamic & 1ull) tmp *= factor;
 		//if(cornerMaskDynamic & 1ull) tmp *= factor;
 		//tmp *= 1.0 + (factor * (edgeMaskDynamic & 1ull)) ; //Decide if corner factor applies or not
 		//tmp *= 1.0 + (factor * (cornerMaskDynamic & 1ull)); //
-		tmp += tmp * (factor * ((edgeMaskDynamic & 1ull) + (factor * (cornerMaskDynamic & 1ull))));
+
+
+		tmp += tmp * (factor * ((edgeMaskDynamic & 1ull) + (factor * (cornerMaskDynamic & 1ull)))); //dad ficed it for me, yay
 
 		ans += tmp;
 
@@ -206,7 +211,7 @@ char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, 
 	//Board createdSpaces[l];
 	Board createdSpace; //No longer an array, shortens space by l
 	//createdSpaces.reserve(32);
-  std::future<double> xCountOutcome[l];
+  std::future<double> xCountOutcome[l]; //-pthread option STRICTLY NEEDED
 	double results[l];
 	//xCountOutcome.reserve(32);
   int bestIndex = 0;
@@ -241,7 +246,7 @@ char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, 
 }
 
 //ruins screen with mask printout
-
+//Remnant of debugging
 void printMask(unsigned long long int in){
 	unsigned long long int meta = (1ull << 63);
 	unsigned long long int metameta = 1;
@@ -258,7 +263,7 @@ Game::Game(){
   skippedTurn = false;
   player1 = true;
 
-#ifdef MASKCHECK
+#ifdef MASKCHECK //use -DMASKCHECK to see some things. they're irrelevant now.
 	std::cout << "Testing masks:\nCorner Mask:\t"; printMask(cornerMask);
 	std::cout << "edgeMask:\t"; printMask(edgeMask);
 #endif
@@ -271,7 +276,7 @@ Game::Game(){
 
 int thinkfast = DEFAULT_DEPTH; //How many moves ahead AI thinks
 
-void compareHeuristics(Board desk){
+void compareHeuristics(Board desk){ //Never used now. Remnant of debugging
 	int vladVal = boardEval(desk);
 	//																			x																o
 	int sergVal = sergEval(desk.boardPlaced & desk.boardX, desk.boardPlaced - desk.boardX );
@@ -304,7 +309,7 @@ bool Game::move(){
     for_each(begin(options), end(options), charToString);
 
     std::cout << '\n';
-		compareHeuristics(field);
+	//	compareHeuristics(field); //remnants of ye olde heuristic checks
     if(player1){
       do{
         std::cout << "Enter row:";
@@ -335,10 +340,14 @@ bool Game::move(){
 			auto end = std::chrono::steady_clock::now();
 			std::chrono::duration<double> elapsed_seconds = end-start;
 	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << /*incidences<<" boards to " << */ thinkfast <<" moves ahead\n";
-#ifdef DYNAMIC_DEPTH
+
+
+#ifdef DYNAMIC_DEPTH //When compiling, use -DDYNAMIC_DEPTH for it to thinkfast
 			if(elapsed_seconds.count() < 0.1) thinkfast++;
 			else if (elapsed_seconds.count() > 0.25) thinkfast--;
 #endif
+
+
     }
 		std::cout << "BoardValue = " << boardEval(field) << '\n';
   }
