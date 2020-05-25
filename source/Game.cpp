@@ -5,7 +5,7 @@
 #include<algorithm>
 #include<chrono>
 #include<limits>
-
+#include<future>
 void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
 }
@@ -75,15 +75,18 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	}
 
 	double ans = 0.0; // basic
-	double factor = (80 - desk.getMoves())/16;
+	int factor = (80 - desk.getMoves())/16;
 	unsigned long long int cornerMaskDynamic = cornerMask;
 	unsigned long long int edgeMaskDynamic = edgeMask;
 	double tmp = 0.0;
 	while(cornerMaskDynamic){
 
 		tmp = ((boardPlacedDynamic & 1ull) * (-1.0 + 2.0*(boardXDynamic & 1ull))); //-1, 0, or 1
-		tmp *= 1.0 + (factor * (edgeMaskDynamic & 1ull)) ; //Decide if corner factor applies or not
-		tmp *= 1.0 + (factor * (cornerMaskDynamic & 1ull)); //
+		//if(edgeMaskDynamic & 1ull) tmp *= factor;
+		//if(cornerMaskDynamic & 1ull) tmp *= factor;
+		//tmp *= 1.0 + (factor * (edgeMaskDynamic & 1ull)) ; //Decide if corner factor applies or not
+		//tmp *= 1.0 + (factor * (cornerMaskDynamic & 1ull)); //
+		tmp += tmp * (factor * ((edgeMaskDynamic & 1ull) + (factor * (cornerMaskDynamic & 1ull))));
 
 		ans += tmp;
 
@@ -175,17 +178,15 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
 		double notableConsequence = maxing?alphaX:betaX;
 		double analysis;
 		for(int i = 0;  i < l && alphaX < betaX; i++){
+			state = desk;
+			state.move(nudges[i]);
+			analysis = moveXPrediction(state, xCalc, depth-1, alphaX, betaX);
+
 			if(maxing){ // Attempt to raise alpha
-					state = desk;
-					state.move(nudges[i]);
-					analysis = moveXPrediction(state, xCalc, depth-1, alphaX, betaX);
 					alphaX = (analysis > alphaX)?analysis:alphaX;
 					notableConsequence = alphaX;
 			}
 			else{
-				state = desk;
-				state.move(nudges[i]);
-				analysis = moveXPrediction(state, xCalc, depth-1, alphaX, betaX);
 				betaX = (analysis < betaX)?analysis:betaX;
 				notableConsequence = betaX;
 			}
@@ -205,7 +206,8 @@ char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, 
 	//Board createdSpaces[l];
 	Board createdSpace; //No longer an array, shortens space by l
 	//createdSpaces.reserve(32);
-  double xCountOutcome[l];
+  std::future<double> xCountOutcome[l];
+	double results[l];
 	//xCountOutcome.reserve(32);
   int bestIndex = 0;
   bool maxim = !(xCalc == desk.getXTurn());
@@ -214,27 +216,60 @@ char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, 
   for(int c = 0; c < l; c++){
     createdSpace = desk;
     createdSpace.move(options[c]);
-    xCountOutcome[c] = (moveXPrediction(createdSpace, xCalc, depth, alpha, beta));
-    if(maxim && xCountOutcome[c] > xCountOutcome[bestIndex]){
+    xCountOutcome[c] = std::async(moveXPrediction,createdSpace, xCalc, depth, alpha, beta);
+	}
+
+	//Wait for the xCountOutcome futures to be done
+	for(int c= 0; c < l; c++){
+		results[c] = xCountOutcome[c].get();
+	}
+
+
+	//Pick the best index by maxing | minning
+	for(int c = 0; c < l; c++){
+	  if(maxim && results[c] > results[bestIndex]){
 			bestIndex = c;
-			alpha = xCountOutcome[c];
+			alpha = results[c];
 		}
-    else if(!maxim && xCountOutcome[c] < xCountOutcome[bestIndex]){
+	  else if(!maxim && results[c] < results[bestIndex]){
 			bestIndex = c;
-			beta = xCountOutcome[c];
+			beta = results[c];
 		}
-  }
+	}
+
   return options[bestIndex];
+}
+
+//ruins screen with mask printout
+
+void printMask(unsigned long long int in){
+	unsigned long long int meta = (1ull << 63);
+	unsigned long long int metameta = 1;
+	std::cout << "Mask :";
+	while(metameta){
+		if(in & metameta) std::cout << "1";
+		else std::cout << "0";
+		metameta = metameta << 1ull;
+	}
+	std::cout << "\n";
 }
 
 Game::Game(){
   skippedTurn = false;
   player1 = true;
+
+#ifdef MASKCHECK
+	std::cout << "Testing masks:\nCorner Mask:\t"; printMask(cornerMask);
+	std::cout << "edgeMask:\t"; printMask(edgeMask);
+#endif
+
 }
 
+#ifndef DEFAULT_DEPTH
+#define DEFAULT_DEPTH 7
+#endif
 
-int thinkfast = 7; //How many moves ahead AI thinks
-
+int thinkfast = DEFAULT_DEPTH; //How many moves ahead AI thinks
 
 void compareHeuristics(Board desk){
 	int vladVal = boardEval(desk);
@@ -300,10 +335,10 @@ bool Game::move(){
 			auto end = std::chrono::steady_clock::now();
 			std::chrono::duration<double> elapsed_seconds = end-start;
 	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << /*incidences<<" boards to " << */ thinkfast <<" moves ahead\n";
-
+#ifdef DYNAMIC_DEPTH
 			if(elapsed_seconds.count() < 0.1) thinkfast++;
 			else if (elapsed_seconds.count() > 0.25) thinkfast--;
-
+#endif
     }
 		std::cout << "BoardValue = " << boardEval(field) << '\n';
   }

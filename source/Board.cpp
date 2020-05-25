@@ -2,7 +2,7 @@
 #include<iostream>
 
 char Board::getMoves() const {return moves;}
-
+/*
 void printMask(unsigned long long int in){
 	unsigned long long int meta = (1ull << 63);
 	unsigned long long int metameta = 1;
@@ -14,6 +14,7 @@ void printMask(unsigned long long int in){
 	}
 	std::cout << "\n";
 }
+*/
 
 void Board::setSquare(char pos, bool isX){
 	unsigned long long int p = charToMask(pos);
