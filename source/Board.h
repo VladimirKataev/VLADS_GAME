@@ -12,13 +12,15 @@ public:
 	//Board(const Board& copy);// is not needed as no pointers to outside self
 	//~Board();// is not needed as everything fits in one
 
+	Board(unsigned long long int bordP, unsigned long long int bordX, bool xT);
+
 
 	//(char & 240) >> 4 to get row#
 	//(char & 15) to get col#
 	unsigned long long int boardPlaced; //64 bits
 	unsigned long long int boardX;			//64 bits
 
-	unsigned char moves = 0;			//8 bits
+	//unsigned char moves = 0;			//8 bits
 	bool xTurn;										//8 bits
 
 	//144 BITS, or 18 BYTES
@@ -41,7 +43,7 @@ public:
 	char changeDir(char pos, char tst);
 	void setSquare(char pos, bool isX);
 	char allowedMove(char pos) const; //see above
-	char getMoves() const;//How many moves are done
+	//char getMoves() const;//How many moves are done
 	bool xMove() const;
 	bool oMove() const;
 	std::vector<char> getAllowedMoves(); //can change the turn, hence non-const

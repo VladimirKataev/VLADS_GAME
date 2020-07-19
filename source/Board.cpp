@@ -1,7 +1,7 @@
 #include"Board.h"
 #include<iostream>
 
-char Board::getMoves() const {return moves;}
+//char Board::getMoves() const {return moves;}
 /*
 void printMask(unsigned long long int in){
 	unsigned long long int meta = (1ull << 63);
@@ -16,6 +16,13 @@ void printMask(unsigned long long int in){
 }
 */
 
+Board::Board(unsigned long long int bordP, unsigned long long int bordX, bool xT){
+	boardPlaced = bordP;
+	boardX = bordX;
+	xTurn = xT;
+}
+
+
 void Board::setSquare(char pos, bool isX){
 	unsigned long long int p = charToMask(pos);
 	//std::cout << "Changed R" << (pos >> 4) << " C" << (pos & 0xf) << '\n';
@@ -29,7 +36,7 @@ void Board::setSquare(char pos, bool isX){
 Board::Board(){
 	boardPlaced = 0;
 	boardX = 0;
-	moves = 4;
+	//moves = 4;
 	xTurn = true;
 
 	setSquare(0x33, true);
@@ -193,6 +200,9 @@ std::string Board::boardString() const{
 	toRet += "X mask ";
 	printMask(boardX);
 	*/
+
+	toRet += std::to_string(boardPlaced) + ',' + std::to_string(boardX) + '\n';
+
 	return toRet;
 }
 
@@ -249,7 +259,7 @@ char Board::move(char pos){
 	changeDir(pos, rcToChar(r, c+1));
 	if(ans){
 		setSquare(pos, xTurn);
-		moves++;
+		//moves++;
 		xTurn = !xTurn;
 	}
 	return ans;

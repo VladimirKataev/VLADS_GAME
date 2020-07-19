@@ -10,6 +10,36 @@ void charToString(char in){
 	std::cout << "{"<< (int)(in >> 4) << ',' << (int) (in & 0xF) << "} ";
 }
 
+// BitCount quickest for args that have only a few 1's
+static int bitCountSparse(uint64_t m) {
+    int ret = 0;
+    for(; m ; m &= (m-1))
+        ret++;
+    return ret;
+}
+
+// BitCount quickest for args that may have any number of 1's
+static int bitCountDense(uint64_t m) {
+    uint64_t acc = m & 0x0101010101010101ULL;
+    for(int i=1; i<8; i++)
+        acc += (0x0101010101010101ULL & (m >> i));
+    acc += (acc >> 32);
+    acc += (acc >> 16);
+    acc += (acc >> 8);
+    return (int)(acc & 255ull);
+}
+
+
+
+static uint64_t col(unsigned n) { return 0x0101010101010101ULL << n; }
+static uint64_t row(unsigned n) { return 0xFFULL << (n << 3); }
+
+uint64_t edges = row(0) | row(7) | col(0) | col(7);
+uint64_t corners = (row(0) | row(7)) & (col(0) | col(7));
+
+
+
+
 //int incidences = 0; //used to analyse the number of boards analysed in AB tree
 
 /* //Remnant of past heuristics
@@ -95,7 +125,7 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	}
 
 	double ans = 0.0; // basic
-	int factor = (80 - desk.getMoves())/16;
+	int factor = (80 - bitCountDense(desk.boardPlaced))/16;
 	unsigned long long int cornerMaskDynamic = cornerMask;
 	unsigned long long int edgeMaskDynamic = edgeMask;
 	double tmp = 0.0;
@@ -120,33 +150,6 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	}
 	return ans;
 }
-
-// BitCount quickest for args that have only a few 1's
-static int bitCountSparse(uint64_t m) {
-    int ret = 0;
-    for(; m ; m &= (m-1))
-        ret++;
-    return ret;
-}
-
-// BitCount quickest for args that may have any number of 1's
-static int bitCountDense(uint64_t m) {
-    uint64_t acc = m & 0x0101010101010101ULL;
-    for(int i=1; i<8; i++)
-        acc += (0x0101010101010101ULL & (m >> i));
-    acc += (acc >> 32);
-    acc += (acc >> 16);
-    acc += (acc >> 8);
-    return (int)(acc & 255ull);
-}
-
-
-
-static uint64_t col(unsigned n) { return 0x0101010101010101ULL << n; }
-static uint64_t row(unsigned n) { return 0xFFULL << (n << 3); }
-
-uint64_t edges = row(0) | row(7) | col(0) | col(7);
-uint64_t corners = (row(0) | row(7)) & (col(0) | col(7));
 
 int sergEval(uint64_t x, uint64_t o) {
     //uint64_t x = b.x, o = b.o;
@@ -311,7 +314,7 @@ bool Game::move(){
   char move;
   int row;
   int col;
-  if((options.size() == 0 && skippedTurn) || field.getMoves() == 64){
+  if((options.size() == 0 && skippedTurn)){
     std::cout << "Game Over\nX:" << (int)(field.getXCount()) << " O:"<< (int)(field.getOCount());
     return false;
   }
