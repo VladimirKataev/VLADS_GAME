@@ -1,0 +1,7 @@
+Game.h/cpp
+  -boardString
+  -constructor
+
+AI.h/cpp
+  -playerMove(game)
+  -aiMove(game)
