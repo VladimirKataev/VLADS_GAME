@@ -40,7 +40,7 @@ uint64_t corners = (row(0) | row(7)) & (col(0) | col(7));
 
 
 
-//int incidences = 0; //used to analyse the number of boards analysed in AB tree
+int incidences = 0; //used to analyse the number of boards analysed in AB tree
 
 /* //Remnant of past heuristics
 const double startMask[64] = {5 ,-1,3,2,2,3,-1, 5, //Weight of spots by location at the start
@@ -180,29 +180,32 @@ int sergEval(uint64_t x, uint64_t o) {
 
 
 
-//Calculates how hard the board favours X
-double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double betaX){
+//Calculates how hard the board favours X, at depth 0 using heuristic
+double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double betaX, double (*heuristic)(Board) = boardEval){
 																												// alphaX is lowest guaranteed X for player X ~Looking to make high
 																												// betaX is highest guaranteed X for O player ~Looking to make low
   if(depth == 0){ //BOTTOM LEVEL, alpha beta pruning irrelevant, valueOfBoard()
-		return boardEval(desk);
+		return heuristic(desk);
 	}
   else{ // alpha beta prune minmax
 
-		std::vector<char> nudges = desk.getAllowedMoves(); //NOTE TO SELF, CAN BE OPTIMISED OUT
-		int l = nudges.size();
-		if(l == 0){
-			desk.changeSide();
-			nudges = desk.getAllowedMoves(); l = nudges.size();
-		}
-		if(l == 0) return boardEval(desk);
-
+		int l = 0; //nudges.size();
+		/*
+		*/
 
 		bool maxing = !(xCalc == desk.getXTurn());
 
 		Board state; //No longer an array, shortens space by l
 		double notableConsequence = maxing?alphaX:betaX;
 		double analysis;
+
+		std::vector<char> nudges = desk.getAllowedMoves(); //NOTE TO SELF, CAN BE OPTIMISED OUT
+		l = nudges.size();
+		if(l == 0){
+			desk.changeSide();
+			nudges = desk.getAllowedMoves(); l = nudges.size();
+		}
+		if(l == 0) return boardEval(desk);
 		for(int i = 0;  i < l && alphaX < betaX; i++){
 			state = desk;
 			state.move(nudges[i]);
@@ -219,13 +222,14 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
 
 		}
 
+
 		return notableConsequence;
 
   }
 }
 
-
-char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, as a coord
+//							Where we evalling from	Depth 						function for evaluating board
+char bestMove(Board desk, bool xCalc, char depth = 5, double (*heuristic)(Board) = boardEval){  //return the best move, as a coord
 																																	//timeToEval is in nanoseconds
   std::vector<char> options = desk.getAllowedMoves();
 	int l = options.size();
@@ -242,7 +246,7 @@ char bestMove(Board desk, bool xCalc, char depth = 5){  //return the best move, 
   for(int c = 0; c < l; c++){
     createdSpace = desk;
     createdSpace.move(options[c]);
-    xCountOutcome[c] = std::async(moveXPrediction,createdSpace, xCalc, depth, alpha, beta);
+    xCountOutcome[c] = std::async(moveXPrediction,createdSpace, xCalc, depth, alpha, beta, heuristic);
 	}
 
 	//Wait for the xCountOutcome futures to be done
@@ -306,11 +310,29 @@ void compareHeuristics(Board desk){ //Never used now. Remnant of debugging
 	else std::cout << "The 2 disagree, Vlad : " << vladVal << " Sergey : " << sergVal << '\n';
 }
 
-
+char getHumanMove(){
+	char move;
+  int row;
+  int col;
+	do{
+		std::cout << "Enter row:";
+		std::cin >> row;
+	}
+	while(0 > row || row > 8);
+	do{
+		std::cout << "Enter col:";
+		std::cin >> col;
+	}
+	while(0 > col || col > 8);
+	move = 0;
+	move += col;
+	move += (row << 4);
+	return move;
+}
 
 bool Game::move(){
   std::cout << field.boardString() << '\n';
-  options = field.getAllowedMoves();
+  std::vector<char> options = field.getAllowedMoves();
   char move;
   int row;
   int col;
@@ -332,35 +354,22 @@ bool Game::move(){
     std::cout << '\n';
 	//	compareHeuristics(field); //remnants of ye olde heuristic checks
     if(player1){
-      do{
-        std::cout << "Enter row:";
-        std::cin >> row;
-      }
-      while(0 > row || row > 8);
-      do{
-        std::cout << "Enter col:";
-        std::cin >> col;
-      }
-      while(0 > col || col > 8);
-      move = 0;
-      move += col;
-      move += (row << 4);
-      field.move(move);
+      field.move(getHumanMove());
       player1 = field.xMove();
     }
     else{ //------------------------------------------Enemy AI time
           //Currently, it's bad
 			auto start = std::chrono::steady_clock::now();
-			//incidences = 0;
-			move = bestMove(field,false, thinkfast);
+			incidences = 0;
+			//move = bestMove(field,false, thinkfast);
 														//False as we calculate for O, not X
-			field.move(move);
+			field.move(bestMove(field,false, thinkfast));
 			std::cout << "AI moved "; charToString(move);
 			player1 = field.xMove();
 
 			auto end = std::chrono::steady_clock::now();
 			std::chrono::duration<double> elapsed_seconds = end-start;
-	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << /*incidences<<" boards to " << */ thinkfast <<" moves ahead\n";
+	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << incidences<<" boards to " << thinkfast <<" moves ahead\n";
 
 
 #ifdef DYNAMIC_DEPTH //When compiling, use -DDYNAMIC_DEPTH for it to thinkfast

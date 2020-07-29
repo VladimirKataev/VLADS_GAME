@@ -16,6 +16,10 @@ void printMask(unsigned long long int in){
 }
 */
 
+static char rcToChar(int r, int c){
+	return (char)(c + (r << 4));
+}
+
 Board::Board(unsigned long long int bordP, unsigned long long int bordX, bool xT){
 	boardPlaced = bordP;
 	boardX = bordX;
@@ -115,9 +119,9 @@ char Board::testDir(char pos, char tst) const{
 				left = (tC < pC),
 				right = (tC > pC);
 
-	char move = xTurn?3:1;
+	char move = xTurn?3:1, foe = 4-move;
 	if(tst & 0x88) return 0;
-	if(!getSquare(tst) || getSquare(tst) == move) return 0;
+	if(getSquare(tst) != foe) return 0;
 	if(pos == tst) return 0;
 	if(pC - tC != 1 && pC != tC && tC - pC != 1) return 0;
 	if(pR - tR != 1 && pR != tR && tR - pR != 1) return 0;
@@ -175,9 +179,7 @@ char Board::rcToChar(char r, char c) const{
 	return (char)(c + (r << 4));
 }
 */
-char Board::rcToChar(int r, int c) const{
-	return (char)(c + (r << 4));
-}
+
 
 std::string Board::boardString() const{
 	std::string toRet;
