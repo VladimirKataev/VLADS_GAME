@@ -24,13 +24,14 @@ int main(){
 	cout << tst.boardString() << endl;
 	*/
 
-	
+
 
 
 	Game run;
 	while(run.move()){
 		cout << endl;
 	}
+
 
 	return 0;
 }

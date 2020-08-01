@@ -1,4 +1,5 @@
 #include"Game.h"
+#include<stdlib.h>
 #include<string>
 #include<iostream>
 #include<vector>
@@ -58,7 +59,7 @@ const unsigned long long int cornerMask =
 	(1ull) + (1ull << 7) + (1ull << 56) + (1ull << 63);
 
 
-#ifndef ANTIMASK
+
 	const unsigned long long int edgeMask =
 		cornerMask +
 		(1ull << 1) + (1ull << 2) + (1ull << 3) + (1ull << 4) + (1ull << 5) + (1ull << 6)
@@ -69,8 +70,8 @@ const unsigned long long int cornerMask =
 		+ (1ull << 40)+   (1ull << 47)
 		+ (1ull << 48)+   (1ull << 55)
 		+ (1ull << 57) + (1ull << 58) + (1ull << 59) + (1ull << 60) + (1ull << 61) + (1ull << 62);
-#else
-const unsigned long long int edgeMask =
+
+const unsigned long long int antiEdgeMask =
 	cornerMask +
 	/*(1ull << 1)*/ + (1ull << 2) + (1ull << 3) + (1ull << 4) + (1ull << 5) + /*(1ull << 6)*/
 	//+ (1ull << 8) + 	(1ull << 15)
@@ -81,7 +82,7 @@ const unsigned long long int edgeMask =
 	//+ (1ull << 48)+   (1ull << 55)
 	+ /*(1ull << 57)*/ + (1ull << 58) + (1ull << 59) + (1ull << 60) + (1ull << 61) /*+ (1ull << 62)*/;
 
-#endif
+
 
 
 
@@ -151,6 +152,45 @@ double boardEval(Board desk){ //The higher, the more X-ish the board
 	return ans;
 }
 
+double newBoardEval(Board desk){
+
+	unsigned long long int boardPlacedDynamic = desk.boardPlaced;
+	unsigned long long int boardXDynamic = desk.boardX;
+
+	if(boardPlacedDynamic == fullmask){
+		if(desk.getXCount() == 32) return 0;
+		else if (desk.getXCount() > 32) return 99999.0;
+		return -99999.0;
+	}
+
+	double ans = 0.0; // basic
+	int factor = (80 - bitCountDense(desk.boardPlaced))/16;
+	unsigned long long int cornerMaskDynamic = cornerMask;
+	unsigned long long int edgeMaskDynamic = antiEdgeMask;
+	double tmp = 0.0;
+	while(boardPlacedDynamic){
+
+		tmp = ((boardPlacedDynamic & 1ull) * (-1.0 + 2.0*(boardXDynamic & 1ull))); //-1, 0, or 1
+
+		//if(edgeMaskDynamic & 1ull) tmp *= factor;
+		//if(cornerMaskDynamic & 1ull) tmp *= factor;
+		//tmp *= 1.0 + (factor * (edgeMaskDynamic & 1ull)) ; //Decide if corner factor applies or not
+		//tmp *= 1.0 + (factor * (cornerMaskDynamic & 1ull)); //
+
+
+		tmp += tmp * (factor * ((edgeMaskDynamic & 1ull) + (factor * (cornerMaskDynamic & 1ull)))); //dad ficed it for me, yay
+
+		ans += tmp;
+
+		cornerMaskDynamic >>= 1ull;
+		edgeMaskDynamic >>= 1ull;
+		boardPlacedDynamic >>= 1ull;
+		boardXDynamic >>= 1ull;
+	}
+	return ans;
+}
+
+
 int sergEval(uint64_t x, uint64_t o) {
     //uint64_t x = b.x, o = b.o;
     //incidence++;
@@ -179,7 +219,7 @@ int sergEval(uint64_t x, uint64_t o) {
 
 
 
-
+//Alpha-beta pruner, with numbers
 //Calculates how hard the board favours X, at depth 0 using heuristic
 double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double betaX, double (*heuristic)(Board) = boardEval){
 																												// alphaX is lowest guaranteed X for player X ~Looking to make high
@@ -205,7 +245,7 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
 			desk.changeSide();
 			nudges = desk.getAllowedMoves(); l = nudges.size();
 		}
-		if(l == 0) return boardEval(desk);
+		if(l == 0) return heuristic(desk);
 		for(int i = 0;  i < l && alphaX < betaX; i++){
 			state = desk;
 			state.move(nudges[i]);
@@ -228,6 +268,8 @@ double moveXPrediction(Board desk, bool xCalc, char depth, double alphaX, double
   }
 }
 
+
+//generic alpha-beta pruner now
 //							Where we evalling from	Depth 						function for evaluating board
 char bestMove(Board desk, bool xCalc, char depth = 5, double (*heuristic)(Board) = boardEval){  //return the best move, as a coord
 																																	//timeToEval is in nanoseconds
@@ -330,14 +372,28 @@ char getHumanMove(){
 	return move;
 }
 
+double linearCount(Board in){
+	double ans = 0.0;
+	for(int i = 0; i < 64; i++){
+		if(in.boardX & (1ull << i)) ans++;
+		else if (in.boardPlaced & (1ull << i)) ans--;
+	}
+	return ans;
+}
+
+
+std::chrono::duration<double> longest;
+
 bool Game::move(){
   std::cout << field.boardString() << '\n';
   std::vector<char> options = field.getAllowedMoves();
   char move;
   int row;
   int col;
+	auto start = std::chrono::steady_clock::now();
   if((options.size() == 0 && skippedTurn)){
     std::cout << "Game Over\nX:" << (int)(field.getXCount()) << " O:"<< (int)(field.getOCount());
+		std::cout << "\nLongest AI thought:" << longest.count() << std::endl;
     return false;
   }
   else if(options.size() == 0){
@@ -354,23 +410,31 @@ bool Game::move(){
     std::cout << '\n';
 	//	compareHeuristics(field); //remnants of ye olde heuristic checks
     if(player1){
-      field.move(getHumanMove());
+			//use -DHUMAN when you want to fight it yourself
+			//#ifdef HUMAN
+			move = getHumanMove();
+			//#else
+			//start = std::chrono::steady_clock::now();
+			//move = bestMove(field, true, thinkfast, boardEval);
+			//#endif
+			field.move(move);
       player1 = field.xMove();
     }
     else{ //------------------------------------------Enemy AI time
           //Currently, it's bad
-			auto start = std::chrono::steady_clock::now();
+			start = std::chrono::steady_clock::now();
 			incidences = 0;
 			//move = bestMove(field,false, thinkfast);
 														//False as we calculate for O, not X
-			field.move(bestMove(field,false, thinkfast));
+																									//We can toy about with different heuristic functions
+			field.move(bestMove(field,false, thinkfast, boardEval));
 			std::cout << "AI moved "; charToString(move);
 			player1 = field.xMove();
 
 			auto end = std::chrono::steady_clock::now();
 			std::chrono::duration<double> elapsed_seconds = end-start;
 	    std::cout << "elapsed time: " << elapsed_seconds.count() << "s, analysing " << incidences<<" boards to " << thinkfast <<" moves ahead\n";
-
+			if(elapsed_seconds > longest) longest = elapsed_seconds;
 
 #ifdef DYNAMIC_DEPTH //When compiling, use -DDYNAMIC_DEPTH for it to thinkfast
 			if(elapsed_seconds.count() < 0.1) thinkfast++;
@@ -379,7 +443,7 @@ bool Game::move(){
 
 
     }
-		std::cout << "BoardValue = " << boardEval(field) << '\n';
+		//std::cout << "BoardValue = " << boardEval(field) << '\n';
   }
   return true;
 }
